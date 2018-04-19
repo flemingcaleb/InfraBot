@@ -1,9 +1,13 @@
 import os				# To access tokens
 from DantesUpdater import danteUpdater	# To access DantesUpdator
+from slackclient import SlackClient
 from flask import Flask
 from flask import request
 
 app = Flask(__name__)
+
+token = os.environ['TESTING_TOKEN']
+sc = SlackClient(token)
 
 @app.route("/")
 def main():
@@ -12,7 +16,8 @@ def main():
 @app.route("/test")
 def test():
 	print("RECIEVED TEST!")
-        return 200
+	sendMessage("Hello from /test", "#general")
+	return "OK"
 #dante = danteUpdater(os.environ['TESTING_TOKEN'])
 
 #dante.start()
@@ -23,6 +28,12 @@ def test():
 #print("Waiting for thread to stop")
 #dante.join()
 
+def sendMessage (message, sendChannel):
+	sc.api_call(
+		"chat.postMessage",
+		channel=sendChannel,
+		text=message
+		)
 
 if __name__ == "__main__":
 	app.run()

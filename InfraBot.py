@@ -22,6 +22,11 @@ def test():
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     print(request.form)
+    print("Token:", request.form['token'])
+    print("Channel ID:", request.form['channel_id'])
+    print("User ID:". request.form['user_id'])
+    print("Text:", request.form['text'])
+    return "Command not yet interested"
 
 @app.route("/dante/start",methods=['POST'])
 def dante_start():

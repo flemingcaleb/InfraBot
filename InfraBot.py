@@ -17,14 +17,14 @@ def main():
 def test():
     print("RECIEVED TEST!")
     sendMessage("Hello from /test", "#general")
-    return "OK"
+    return "Test Sent, did you see the prompt?"
 
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
     dante.start()
     print("Started Dantes")
-    return "OK"
+    return "Started Dantes Updater"
 
 def sendMessage (message, sendChannel):
     print("Sending Message")

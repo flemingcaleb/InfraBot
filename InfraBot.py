@@ -1,5 +1,5 @@
 import os				# To access tokens
-import DantesUpdater	# To access DantesUpdator
+from InfraBot import DantesUpdater	# To access DantesUpdator
 from slackclient import SlackClient
 from flask import Flask
 from flask import request
@@ -18,6 +18,13 @@ def test():
     print("RECIEVED TEST!")
     sendMessage("Hello from /test", "#general")
     return "OK"
+
+@app.route("/dante/start")
+def dante_start():
+    dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
+    dante.start()
+    print("Started Dantes")
+    return "OK"
 #dante = danteUpdater(os.environ['TESTING_TOKEN'])
 
 #dante.start()
@@ -35,8 +42,5 @@ def sendMessage (message, sendChannel):
         text=message
         )
 
-if __name__ == "__main__":
-    dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
-    dante.start()
-    print("Started Dantes")
+if __name__ == "__InfraBot__":
     app.run()

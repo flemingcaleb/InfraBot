@@ -25,13 +25,12 @@ def message_handle():
     if content['type'] == "url_verification":
         print("Received verification message")
         return content['challenge']
-    
+
     curEvent = content['event']
-    
+
     if curEvent['type'] == 'message':
         if curEvent['text'].startswith("!dante"):
-            sendMessage(curEvent['text'][len("!dante"):], curEvent['channel'])
-            return "OK"
+            return dante.api_entry(curEvent['text'][len("!dante"):], curEvent['channel'])
     else:
         print("Event not a message")
         print(content)

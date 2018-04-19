@@ -21,8 +21,21 @@ def test():
 
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
-    print(request.form)
-    return request.form['challenge']
+    content = request.json
+    if content['type'] == "url_verification":
+        print("Received verification message")
+        return content['challenge']
+    
+    curEvent = content['event']
+    
+    if curEvent['type'] == 'message':
+        if curEvent['text'].startswith("!dante"):
+            sendMessage(curEvent['text'][len("!dante"):], curEvent['channel'])
+            return "OK"
+    else:
+        print("Event not a message")
+        print(content)
+    return "OK"
 
 @app.route("/dante",methods=['POST'])
 def dante_parse():

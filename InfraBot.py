@@ -19,6 +19,10 @@ def test():
     sendMessage("Hello from /test", "#general")
     return "Test Sent, did you see the prompt?"
 
+@app.route("/dante",methods=['POST'])
+def dante_parse:
+    print(request.form)
+
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])

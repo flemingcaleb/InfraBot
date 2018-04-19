@@ -13,13 +13,13 @@ sc = SlackClient(token)
 def main():
     return "Welcome"
 
-@app.route("/test")
+@app.route("/test",methods=['POST'])
 def test():
     print("RECIEVED TEST!")
     sendMessage("Hello from /test", "#general")
     return "OK"
 
-@app.route("/dante/start")
+@app.route("/dante/start",methods=['POST'])
 def dante_start():
     dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
     dante.start()
@@ -36,6 +36,7 @@ def dante_start():
 #dante.join()
 
 def sendMessage (message, sendChannel):
+    print("Sending Message")
     sc.api_call(
         "chat.postMessage",
         channel=sendChannel,

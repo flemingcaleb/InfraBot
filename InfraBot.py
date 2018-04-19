@@ -25,15 +25,6 @@ def dante_start():
     dante.start()
     print("Started Dantes")
     return "OK"
-#dante = danteUpdater(os.environ['TESTING_TOKEN'])
-
-#dante.start()
-
-#input()
-
-#dante.stop()
-#print("Waiting for thread to stop")
-#dante.join()
 
 def sendMessage (message, sendChannel):
     print("Sending Message")

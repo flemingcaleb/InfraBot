@@ -27,7 +27,6 @@ class DantesUpdater (threading.Thread):
         self.__continue = True
         self.__send = False
         self.__longsleep = False
-        InfraBot.sendMessage("Starting Dante's Updates", "#general")
 
     ''' Function that starts the updater in its own thread, called by start() SHOULD NOT
         BE CALLED BY ITSELF

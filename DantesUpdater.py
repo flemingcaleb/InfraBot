@@ -92,6 +92,20 @@ class DantesUpdater (threading.Thread):
         self.__lock.release()
         return status
 
+    def api_entry(self, message, channel):
+        if message == "start":
+            self.start_loop()
+            InfraBot.sendMessage("Started Dantes Updater", channel)
+            return "Started Dantes Updater"
+        elif message == "stop":
+            self.stop()
+            InfraBot.sendMessage("Stopped Dantes Manager", channel)
+            return "Stopped Dantes Updater"
+        elif message == "status":
+            return self.status()
+        else:
+            return "Command not found"
+
 # Run dantes updater if in main context
 if __name__=='__main__':
     thing = os.environ['TESTING_TOKEN']

@@ -19,6 +19,11 @@ def test():
     sendMessage("Hello from /test", "#general")
     return "Test Sent, did you see the prompt?"
 
+@app.route("/api/messages",methods=['GET','POST'])
+def message_handle():
+    print(request.form)
+    return request.form['challenge']
+
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     print(request.form)

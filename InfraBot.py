@@ -20,7 +20,7 @@ def test():
     return "Test Sent, did you see the prompt?"
 
 @app.route("/dante",methods=['POST'])
-def dante_parse:
+def dante_parse():
     print(request.form)
 
 @app.route("/dante/start",methods=['POST'])

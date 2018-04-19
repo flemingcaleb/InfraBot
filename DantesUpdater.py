@@ -80,6 +80,18 @@ class DantesUpdater (threading.Thread):
         self.__continue = False
         self.__lock.release()
 
+    ''' Function that indicates if the updater is running
+        Input:
+            N/A
+        Output:
+            A boolean indicating if the module is running
+    '''
+    def status (self):
+        self.__lock.acqure()
+        status = self.__continue
+        self.__lock.release()
+        return status
+
 # Run dantes updater if in main context
 if __name__=='__main__':
     thing = os.environ['TESTING_TOKEN']

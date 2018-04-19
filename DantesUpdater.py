@@ -85,7 +85,7 @@ if __name__=='__main__':
     thing = os.environ['TESTING_TOKEN']
     manager = danteUpdater(thing)
     manager.start()
-    input('Press any button to exit')
+    input('Press ENTER to exit')
     manager.stop()
     print("Stopping thread (may take a long time)")
     manager.join()

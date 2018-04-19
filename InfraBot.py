@@ -1,7 +1,7 @@
 import os				# To access tokens
 from DantesUpdater import danteUpdater	# To access DantesUpdator
 from flask import Flask
-from flask.ext.api import status
+from flask import request
 
 app = Flask(__name__)
 
@@ -12,8 +12,7 @@ def main():
 @app.route("/test")
 def test():
 	print("RECIEVED TEST!")
-	return status.HTTP_200_OK
-
+        return 200
 #dante = danteUpdater(os.environ['TESTING_TOKEN'])
 
 #dante.start()

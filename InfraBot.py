@@ -17,23 +17,18 @@ def main():
 def test():
     print("RECIEVED TEST!")
     sendMessage("Hello from /test", "#general")
-    return "OK"
+    return "Test Sent, did you see the prompt?"
+
+@app.route("/dante",methods=['POST'])
+def dante_parse:
+    print(request.form)
 
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
     dante.start()
     print("Started Dantes")
-    return "OK"
-#dante = danteUpdater(os.environ['TESTING_TOKEN'])
-
-#dante.start()
-
-#input()
-
-#dante.stop()
-#print("Waiting for thread to stop")
-#dante.join()
+    return "Started Dantes Updater"
 
 def sendMessage (message, sendChannel):
     print("Sending Message")

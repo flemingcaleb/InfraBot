@@ -3,7 +3,7 @@ import threading			# Enables use as module in slackbot
 from time import sleep			# For sleep()
 from datetime import datetime		# To get system time
 from slackclient import SlackClient	# For Slack Client
-import InfraBot
+from InfraBot import InfraBot
 
 Dante_Close_Hours = [1,9,17]
 

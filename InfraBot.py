@@ -9,6 +9,8 @@ app = Flask(__name__)
 token = os.environ['TESTING_TOKEN']
 sc = SlackClient(token)
 
+dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
+
 @app.route("/")
 def main():
     return "Welcome"
@@ -47,7 +49,6 @@ def dante_parse():
 
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
-    dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
     dante.start()
     print("Started Dantes")
     return "Started Dantes Updater"

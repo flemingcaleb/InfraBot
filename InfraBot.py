@@ -31,8 +31,8 @@ def message_handle():
     curEvent = content['event']
 
     if curEvent['type'] == 'message':
-        if curEvent['text'].startswith("!dante"):
-            return dante.api_entry(curEvent['text'][len("!dante"):], curEvent['channel'])
+        if curEvent['text'].startswith("!dante "):
+            return dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'])
     else:
         print("Event not a message")
         print(content)

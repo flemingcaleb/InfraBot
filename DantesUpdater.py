@@ -24,18 +24,18 @@ class DantesUpdater:
                 self.__curThread.stop()
                 self.__curThread = DantesUpdater_Thread(self.__token)
                 self.__curThread.start()
-                InfraBot.sendMessage("Restarted Dantes Updater", channel)
+                InfraBot.sendEphemeral("Restarted Dantes Updater", channel, user)
             else:
                 self.__curThread.start()
-                InfraBot.sendMessage("Started Dantes Updater", channel)
+                InfraBot.sendEphemeral("Started Dantes Updater", channel, user)
             return "Started Dantes Updater"
         elif message == "stop":
             self.__curThread.stop()
             self.__curThread = DantesUpdater_Thread(self.__token)
-            InfraBot.sendMessage("Stopped Dantes Manager", channel)
+            InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user)
             return "Stopped Dantes Updater"
         elif message == "status":
-            InfraBot.sendEphemeral(self.__curThread.status(), channel, user)
+            InfraBot.sendMessage(self.__curThread.status(), channel)
         else:
             return "Command not found"
 

@@ -50,7 +50,7 @@ class DantesUpdater_Thread(threading.Thread):
         threading.Thread.__init__(self)
         self.__sc = SlackClient(token)
         self.__lock = threading.Lock()
-        self.__continue = True
+        self.__continue = False
         self.__send = False
         self.__longsleep = False
 
@@ -67,6 +67,7 @@ class DantesUpdater_Thread(threading.Thread):
 
     ''' Main thread body, determines if a message needs to be sent, otherwise sleeps '''
     def start_loop (self):
+        self.__continue = True
         while True:
             self.__longSleep = False
             curTime = datetime.now()

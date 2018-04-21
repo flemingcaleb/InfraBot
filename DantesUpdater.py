@@ -13,7 +13,33 @@ Dante_Open_Hours = [2,10,16]
 ''' Class that defines a danteUpdater Thread. This thread is responsible for updating the
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
-class DantesUpdater (threading.Thread):
+class DantesUpdater:
+    def __init(self, token):
+        self.__token = token
+        self.__curThread = DantesUpdater_Thread(self.__token)
+
+    def api_entry(self, message, channel, user):
+        if message == "start":
+            if self.__curThread.status():
+                self.__curThread.stop()
+                self.__curThread = DantesUpdater_Thread(self.__token)
+                self.__curThread.start()
+                InfraBot.sendMessage("Restarted Dantes Updater", channel)
+            else:
+                self.__curThread.start()
+            InfraBot.sendMessage("Started Dantes Updater", channel)
+            return "Started Dantes Updater"
+        elif message == "stop":
+            self.__curThread.stop()
+            self.__curThread = DantesUpdater_Thread(self.__token)
+            InfraBot.sendMessage("Stopped Dantes Manager", channel)
+            return "Stopped Dantes Updater"
+        elif message == "status":
+            InfraBot.sendEphemeral(self.__curThread.status(), channel, user)
+        else:
+            return "Command not found"
+
+class DantesUpdater_Thread(threading.Thread):
     ''' Initializer for danteUpdater object
         Input:
             token: API token to commuicate with the slack team
@@ -92,19 +118,7 @@ class DantesUpdater (threading.Thread):
         self.__lock.release()
         return status
 
-    def api_entry(self, message, channel, user):
-        if message == "start":
-            self.start()
-            InfraBot.sendMessage("Started Dantes Updater", channel)
-            return "Started Dantes Updater"
-        elif message == "stop":
-            self.stop()
-            InfraBot.sendMessage("Stopped Dantes Manager", channel)
-            return "Stopped Dantes Updater"
-        elif message == "status":
-            InfraBot.sendEphemeral(self.status(), channel, user)
-        else:
-            return "Command not found"
+
 
 # Run dantes updater if in main context
 if __name__=='__main__':

@@ -1,5 +1,7 @@
 import os				# To access tokens
 from InfraBot import DantesUpdater	# To access DantesUpdator
+from InfraBot import UserManager
+from InfraBot import InfraManager
 from slackclient import SlackClient
 from flask import Flask
 from flask import request
@@ -10,6 +12,8 @@ token = os.environ['TESTING_TOKEN']
 sc = SlackClient(token)
 
 dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
+user = UserManager.UserManager()
+infra = InfraManager.InfraManager()
 
 @app.route("/")
 def main():
@@ -33,6 +37,12 @@ def message_handle():
     if curEvent['type'] == 'message':
         if curEvent['text'].startswith("!dante "):
             dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'])
+        elif curEvent['text'].startswith("!user "):
+            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'])
+        elif curEvent['text'].startswith("!infra "):
+            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'])
+        #else:
+        #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
     else:
         print("Event not a message")
         print(content)

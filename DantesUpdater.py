@@ -87,7 +87,7 @@ class DantesUpdater (threading.Thread):
             A boolean indicating if the module is running
     '''
     def status (self):
-        self.__lock.acqure()
+        self.__lock.acquire()
         status = self.__continue
         self.__lock.release()
         return status
@@ -102,7 +102,7 @@ class DantesUpdater (threading.Thread):
             InfraBot.sendMessage("Stopped Dantes Manager", channel)
             return "Stopped Dantes Updater"
         elif message == "status":
-            return self.status()
+            return str(self.status())
         else:
             return "Command not found"
 

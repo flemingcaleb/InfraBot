@@ -102,7 +102,7 @@ class DantesUpdater (threading.Thread):
             InfraBot.sendMessage("Stopped Dantes Manager", channel)
             return "Stopped Dantes Updater"
         elif message == "status":
-            return str(self.status())
+            InfraBot.sendEphemeral(self.status(), channel, user)
         else:
             return "Command not found"
 

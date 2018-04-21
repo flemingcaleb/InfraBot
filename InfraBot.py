@@ -61,5 +61,14 @@ def sendMessage (message, sendChannel):
         text=message
         )
 
+def sendEphemeral (message, sendChannel, sendUserID):
+    sc.api_call(
+        "chat.postEphemeral",
+        channel=sendChannel,
+        user=sendUserID,
+        as_user=true,
+        text=message
+        )
+
 if __name__ == "__InfraBot__":
     app.run()

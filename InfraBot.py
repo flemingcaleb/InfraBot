@@ -32,7 +32,7 @@ def message_handle():
 
     if curEvent['type'] == 'message':
         if curEvent['text'].startswith("!dante "):
-            return dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'])
+            return dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user_id'])
     else:
         print("Event not a message")
         print(content)
@@ -58,6 +58,15 @@ def sendMessage (message, sendChannel):
     sc.api_call(
         "chat.postMessage",
         channel=sendChannel,
+        text=message
+        )
+
+def sendEphemeral (message, sendChannel, sendUserID):
+    sc.api_call(
+        "chat.postEphemeral",
+        channel=sendChannel,
+        user=sendUserID,
+        as_user=true,
         text=message
         )
 

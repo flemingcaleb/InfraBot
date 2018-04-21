@@ -92,7 +92,7 @@ class DantesUpdater (threading.Thread):
         self.__lock.release()
         return status
 
-    def api_entry(self, message, channel):
+    def api_entry(self, message, channel, user):
         if message == "start":
             self.start()
             InfraBot.sendMessage("Started Dantes Updater", channel)

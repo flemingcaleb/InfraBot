@@ -14,7 +14,7 @@ Dante_Open_Hours = [2,10,16]
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
 class DantesUpdater:
-    def __init(self, token):
+    def __init__(self, token):
         self.__token = token
         self.__curThread = DantesUpdater_Thread(self.__token)
 

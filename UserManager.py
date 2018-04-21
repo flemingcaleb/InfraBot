@@ -5,5 +5,5 @@ class UserManager:
         self.num = 0
 
     def api_entry(self, message, channel, user):
-        Infrabot.sendMessage("Module not yet implemented")
+        InfraBot.sendMessage("Module not yet implemented", channel)
         return "Module not yet implemented"

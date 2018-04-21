@@ -41,8 +41,8 @@ def message_handle():
             user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'])
         elif curEvent['text'].startswith("!infra "):
             infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'])
-        else:
-            sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
+        #else:
+        #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
     else:
         print("Event not a message")
         print(content)

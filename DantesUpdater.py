@@ -27,7 +27,7 @@ class DantesUpdater:
                 InfraBot.sendMessage("Restarted Dantes Updater", channel)
             else:
                 self.__curThread.start()
-            InfraBot.sendMessage("Started Dantes Updater", channel)
+                InfraBot.sendMessage("Started Dantes Updater", channel)
             return "Started Dantes Updater"
         elif message == "stop":
             self.__curThread.stop()

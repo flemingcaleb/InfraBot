@@ -37,7 +37,7 @@ class DantesUpdater:
         elif message == "status":
             if self.__curThread.status():
                 InfraBot.sendMessage("Status: Running", channel)
-            else
+            else:
                 InfraBot.sendMessage("Status: Stopped", channel)
         else:
             return "Command not found"

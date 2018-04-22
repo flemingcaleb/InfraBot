@@ -35,7 +35,10 @@ class DantesUpdater:
             InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user)
             return "Stopped Dantes Updater"
         elif message == "status":
-            InfraBot.sendMessage(self.__curThread.status(), channel)
+            if self.__curThread.status():
+                InfraBot.sendMessage("Status: Running", channel)
+            else
+                InfraBot.sendMessage("Status: Stopped", channel)
         else:
             return "Command not found"
 

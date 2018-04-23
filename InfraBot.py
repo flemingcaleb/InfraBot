@@ -93,6 +93,13 @@ def dante_start():
     print("Started Dantes")
     return "Started Dantes Updater"
 
+''' Function to send a message to a channel
+    Input:
+        message: Message to send
+        sendChannel: Channel to send the message to
+    Output:
+        N/A
+'''
 def sendMessage (message, sendChannel):
     print("Sending Message")
     sc.api_call(

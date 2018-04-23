@@ -108,6 +108,14 @@ def sendMessage (message, sendChannel):
         text=message
         )
 
+''' Function to send an ephemeral message
+    Input:
+        message: Message to send
+        sendChannel: Channel to send the message in
+        sendUserID: User to send the message to
+    Output:
+        N/A
+'''
 def sendEphemeral (message, sendChannel, sendUserID):
     sc.api_call(
         "chat.postEphemeral",

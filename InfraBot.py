@@ -8,7 +8,8 @@ from flask import request
 
 app = Flask(__name__)
 
-token = os.environ['TESTING_TOKEN']
+token = os.environ['BOT_TOKEN']
+verify_token = os.environ['VERIFY_TOKEN']
 sc = SlackClient(token)
 
 dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
@@ -21,6 +22,10 @@ def main():
 
 @app.route("/test",methods=['POST'])
 def test():
+    content = request.json
+    if content['token'] == verify_token:
+        print("Unauthorized message detected")
+        return False
     print("RECIEVED TEST!")
     sendMessage("Hello from /test", "#general")
     return "Test Sent, did you see the prompt?"
@@ -28,6 +33,9 @@ def test():
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
     content = request.json
+    if content['token'] == verify_token:
+        print("Unauthorized message detected")
+        return False
     if content['type'] == "url_verification":
         print("Received verification message")
         return content['challenge']
@@ -50,6 +58,10 @@ def message_handle():
 
 @app.route("/dante",methods=['POST'])
 def dante_parse():
+    content = request.json
+    if content['token'] == verify_token:
+        print("Unauthorized message detected")
+        return False
     print(request.form)
     print("Token:", request.form['token'])
     print("Channel ID:", request.form['channel_id'])
@@ -59,6 +71,10 @@ def dante_parse():
 
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
+    content = request.json
+    if content['token'] == verify_token:
+        print("Unauthorized message detected")
+        return False
     dante.start()
     print("Started Dantes")
     return "Started Dantes Updater"

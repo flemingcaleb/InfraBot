@@ -8,7 +8,8 @@ from flask import request
 
 app = Flask(__name__)
 
-token = os.environ['TESTING_TOKEN']
+token = os.environ['BOT_TOKEN']
+verify_token = os.environ['VERIFY_TOKEN']
 sc = SlackClient(token)
 
 dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])

@@ -143,7 +143,7 @@ def checkPermission(user, requiredPerms):
         return True
     elif (user in memberList) and (requiredPerms == "member"):
         return True
-    else
+    else:
         return False
 
 ''' Function to find the verify a user and determine their group membership
@@ -167,7 +167,7 @@ def findUserGroup(toCheck):
         ownerList.append(toCheck)
     elif user['is_admin']:
         adminList.append(toCheck)
-    else
+    else:
         memberList.append(toCheck)
     return True
 

@@ -2,7 +2,11 @@ import os				# To access tokens
 from InfraBot import DantesUpdater	# To access DantesUpdator
 from InfraBot import UserManager
 from InfraBot import InfraManager
+
+# Copyright (c) 2015-2016 Slack Technologies, Inc
 from slackclient import SlackClient
+
+# Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
 from flask import request
 

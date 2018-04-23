@@ -13,18 +13,24 @@ ownerList = []
 adminList = []
 memberList = []
 
+# Set of tokens provided by the app
 token = os.environ['BOT_TOKEN']
 verify_token = os.environ['VERIFY_TOKEN']
+
+# Client to communicate with Slack
 sc = SlackClient(token)
 
+# Plugin objects
 dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 
+# Default webserver route
 @app.route("/")
 def main():
     return "Welcome"
 
+# URI for /test command
 @app.route("/test",methods=['POST'])
 def test():
     content = request.json
@@ -35,6 +41,7 @@ def test():
     sendMessage("Hello from /test", "#general")
     return "Test Sent, did you see the prompt?"
 
+# URI for event subscription notifications
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
     content = request.json
@@ -61,6 +68,7 @@ def message_handle():
         print(content)
     return "OK"
 
+# Test route to print request information
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     content = request.json
@@ -74,6 +82,7 @@ def dante_parse():
     print("Text:", request.form['text'])
     return "Command not yet interested"
 
+# Route to handle the dante_start command
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     content = request.json

@@ -21,7 +21,7 @@ verify_token = os.environ['VERIFY_TOKEN']
 sc = SlackClient(token)
 
 # Plugin objects
-dante = DantesUpdater.DantesUpdater(os.environ['TESTING_TOKEN'])
+dante = DantesUpdater.DantesUpdater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 

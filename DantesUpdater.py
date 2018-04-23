@@ -14,9 +14,8 @@ Dante_Open_Hours = [2,10,16]
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
 class DantesUpdater:
-    def __init__(self, token):
-        self.__token = token
-        self.__curThread = DantesUpdater_Thread(self.__token)
+    def __init__(self):
+        self.__curThread = DantesUpdater_Thread()
 
     def api_entry(self, message, channel, user):
         if message == "start":
@@ -25,7 +24,7 @@ class DantesUpdater:
                 return "Access Denied"
             if self.__curThread.status():
                 self.__curThread.stop()
-                self.__curThread = DantesUpdater_Thread(self.__token)
+                self.__curThread = DantesUpdater_Thread()
                 self.__curThread.start()
                 InfraBot.sendEphemeral("Restarted Dantes Updater", channel, user)
             else:
@@ -37,7 +36,7 @@ class DantesUpdater:
                 InfraBot.sendEphemeral("Access Denied", channel, user)
                 return "Access Denied"
             self.__curThread.stop()
-            self.__curThread = DantesUpdater_Thread(self.__token)
+            self.__curThread = DantesUpdater_Thread()
             InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user)
             return "Stopped Dantes Updater"
         elif message == "status":
@@ -55,9 +54,8 @@ class DantesUpdater_Thread(threading.Thread):
         Output:
             danteUpdater object
     '''
-    def __init__(self, token):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.__sc = SlackClient(token)
         self.__lock = threading.Lock()
         self.__continue = False
         self.__send = False

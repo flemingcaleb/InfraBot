@@ -128,14 +128,3 @@ class DantesUpdater_Thread(threading.Thread):
         self.__lock.release()
         return status
 
-
-
-# Run dantes updater if in main context
-if __name__=='__main__':
-    thing = os.environ['TESTING_TOKEN']
-    manager = danteUpdater(thing)
-    manager.start()
-    input('Press ENTER to exit')
-    manager.stop()
-    print("Stopping thread (may take a long time)")
-    manager.join()

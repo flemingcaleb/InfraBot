@@ -2,7 +2,6 @@ import os 				# For env variables
 import threading			# Enables use as module in slackbot
 from time import sleep			# For sleep()
 from datetime import datetime		# To get system time
-from slackclient import SlackClient	# For Slack Client
 from InfraBot import InfraBot
 
 Dante_Close_Hours = [1,9,17]
@@ -14,28 +13,36 @@ Dante_Open_Hours = [2,10,16]
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
 class DantesUpdater:
-    def __init__(self, token):
-        self.__token = token
-        self.__curThread = DantesUpdater_Thread(self.__token)
+    def __init__(self):
+        self.__curThread = DantesUpdater_Thread()
 
     def api_entry(self, message, channel, user):
         if message == "start":
+            if not InfraBot.checkPermission(user, "admin"):
+                InfraBot.sendEphemeral("Access Denied", channel, user)
+                return "Access Denied"
             if self.__curThread.status():
                 self.__curThread.stop()
-                self.__curThread = DantesUpdater_Thread(self.__token)
+                self.__curThread = DantesUpdater_Thread()
                 self.__curThread.start()
-                InfraBot.sendMessage("Restarted Dantes Updater", channel)
+                InfraBot.sendEphemeral("Restarted Dantes Updater", channel, user)
             else:
                 self.__curThread.start()
-                InfraBot.sendMessage("Started Dantes Updater", channel)
+                InfraBot.sendEphemeral("Started Dantes Updater", channel, user)
             return "Started Dantes Updater"
         elif message == "stop":
+            if not InfraBot.checkPermission(user, "admin"):
+                InfraBot.sendEphemeral("Access Denied", channel, user)
+                return "Access Denied"
             self.__curThread.stop()
-            self.__curThread = DantesUpdater_Thread(self.__token)
-            InfraBot.sendMessage("Stopped Dantes Manager", channel)
+            self.__curThread = DantesUpdater_Thread()
+            InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user)
             return "Stopped Dantes Updater"
         elif message == "status":
-            InfraBot.sendEphemeral(self.__curThread.status(), channel, user)
+            if self.__curThread.status():
+                InfraBot.sendMessage("Status: Running", channel)
+            else:
+                InfraBot.sendMessage("Status: Stopped", channel)
         else:
             return "Command not found"
 
@@ -46,9 +53,8 @@ class DantesUpdater_Thread(threading.Thread):
         Output:
             danteUpdater object
     '''
-    def __init__(self, token):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.__sc = SlackClient(token)
         self.__lock = threading.Lock()
         self.__continue = False
         self.__send = False
@@ -119,14 +125,3 @@ class DantesUpdater_Thread(threading.Thread):
         self.__lock.release()
         return status
 
-
-
-# Run dantes updater if in main context
-if __name__=='__main__':
-    thing = os.environ['TESTING_TOKEN']
-    manager = danteUpdater(thing)
-    manager.start()
-    input('Press ENTER to exit')
-    manager.stop()
-    print("Stopping thread (may take a long time)")
-    manager.join()

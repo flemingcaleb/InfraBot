@@ -8,6 +8,11 @@ from flask import request
 
 app = Flask(__name__)
 
+# List of users by permission level
+ownerList = []
+adminList = []
+memberList = []
+
 token = os.environ['BOT_TOKEN']
 verify_token = os.environ['VERIFY_TOKEN']
 sc = SlackClient(token)
@@ -94,6 +99,53 @@ def sendEphemeral (message, sendChannel, sendUserID):
         user=sendUserID,
         text=message
         )
+
+''' Function to check to see if a user possesses a specified permission level
+    Input:
+        user: User to check permissions of
+        requiredPerms: String indicating the permissions to check for
+            Possible values: owner, admin, member
+    Output:
+        Boolean indicating if the user has the required permissions
+'''
+def checkPermission(user, requiredPerms):
+    if not ((user in ownerList) or (user in adminList) or (user in memberList)):
+        if not findUserGroup(user):
+            return False
+
+    if user in ownerList:
+        return True
+    elif (user in adminList) and ((requiredPerms == "admin") or (requiredPerms == "member")):
+        return True
+    elif (user in memberList) and (requiredPerms == "member"):
+        return True
+    else
+        return False
+
+''' Function to find the verify a user and determine their group membership
+    Input:
+        toCheck: User object to verify and classify
+    Output:
+        Boolean indicating success or failure
+'''
+def findUserGroup(toCheck):
+    response = sc.api_call(
+        "users.info",
+        user=toCheck,
+        include_locale="false"
+    )
+
+    if not response['ok']:
+        return False
+    user = response['user']
+
+    if user['is_owner']:
+        ownerList.append(toCheck)
+    elif user['is_admin']:
+        adminList.append(toCheck)
+    else
+        memberList.append(toCheck)
+    return True
 
 if __name__ == "__InfraBot__":
     app.run()

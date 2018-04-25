@@ -29,6 +29,8 @@ agentSalt = os.environ['AGENT_SALT']
 # Client to communicate with Slack
 sc = SlackClient(token)
 
+
+clientDictionary = {}
 # Dictionary of SlackClients stored by TeamID
 clientDictionary['TA4P4C7FG'] = sc, veritoken
 

@@ -18,7 +18,7 @@ class DantesUpdater:
 
     def api_entry(self, message, channel, user, team_id):
         if message == "start":
-            if not InfraBot.checkPermission(user, "admin"):
+            if not InfraBot.checkPermission(user, "admin", team_id):
                 InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"
             if self.__curThread.status():
@@ -31,7 +31,7 @@ class DantesUpdater:
                 InfraBot.sendEphemeral("Started Dantes Updater", channel, user, team_id)
             return "Started Dantes Updater"
         elif message == "stop":
-            if not InfraBot.checkPermission(user, "admin"):
+            if not InfraBot.checkPermission(user, "admin", team_id):
                 InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"
             self.__curThread.stop()

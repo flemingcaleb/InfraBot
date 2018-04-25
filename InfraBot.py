@@ -10,6 +10,12 @@ from slackclient import SlackClient
 from flask import Flask
 from flask import request
 
+# Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
+from hashids import Hashids
+
+#
+import postgresql
+
 app = Flask(__name__)
 
 # List of users by permission level

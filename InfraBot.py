@@ -72,6 +72,16 @@ def message_handle():
         print(content)
     return "OK"
 
+# URI for an agent with ID <id> to retrieve a list of unfetched commandIDs
+@app.route("/api/agent/<id>/command",methods=['GET']):
+def agent_id_command(id):
+    return 404
+
+# URI for an agent to get a specific command and post the result
+@app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST']):
+def agent_id_command_id(aid, cid):
+    return 404
+
 # Test route to print request information
 @app.route("/dante",methods=['POST'])
 def dante_parse():

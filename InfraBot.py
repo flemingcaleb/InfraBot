@@ -164,17 +164,22 @@ def sendEphemeral (message, sendChannel, sendUserID):
         Boolean indicating if the user has the required permissions
 '''
 def checkPermission(user, requiredPerms):
-    if not ((user in ownerList) or (user in adminList) or (user in memberList)):
-        if not findUserGroup(user):
-            return False
+    dbUser = Database.Users.query.filter_by(user_id = user).first()
+    if dbUser is None:
+        # Add user to the database
+        curPermissions = addUser(user)
+    else:
+        curPermissions = dbUser.permission_level
 
-    if user in ownerList:
+    if curPermissions == Database.permissions.owner:
+        print("User owner");
         return True
-    elif (user in adminList) and ((requiredPerms == "admin") or (requiredPerms == "member")):
+    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner):
         return True
-    elif (user in memberList) and (requiredPerms == "member"):
+    elif requiredPerms == Database.permissions.user:
         return True
     else:
+        print(curPermissions)
         return False
 
 ''' Function to find the verify a user and determine their group membership
@@ -183,7 +188,8 @@ def checkPermission(user, requiredPerms):
     Output:
         Boolean indicating success or failure
 '''
-def findUserGroup(toCheck):
+def addUser(toCheck):
+    print("Adding user")
     response = sc.api_call(
         "users.info",
         user=toCheck,
@@ -191,16 +197,24 @@ def findUserGroup(toCheck):
     )
 
     if not response['ok']:
-        return False
+        return None
     user = response['user']
 
     if user['is_owner']:
-        ownerList.append(toCheck)
+        # add owner permissions
+        newPerms = Database.permissions.owner
     elif user['is_admin']:
-        adminList.append(toCheck)
+        #add admin permissions
+        newPerms = Database.permissions.admin
     else:
-        memberList.append(toCheck)
-    return True
+        #add user permissions
+        newPerms =  Database.permissions.user
 
-if __name__ == "__InfraBot__":
-    app.run()
+    newUser = Database.Users(newPerms, 2, toCheck)
+    db.session.add(newUser)
+    db.session.commit()
+
+    return newPerms
+
+if __name__ == '__main__':
+    main()

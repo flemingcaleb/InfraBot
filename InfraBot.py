@@ -1,18 +1,29 @@
 import os				# To access tokens
-from InfraBot import DantesUpdater	# To access DantesUpdator
-from InfraBot import UserManager
-from InfraBot import InfraManager
 
 # Copyright (c) 2015-2016 Slack Technologies, Inc
 from slackclient import SlackClient
-
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
 from flask import request
+from flask_sqlalchemy import SQLAlchemy
+from InfraBot import Helper
+
+# Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
+from hashids import Hashids
+
+#
+import postgresql
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
+db = SQLAlchemy(app)
 
-# List of users by permission level
+from InfraBot import DantesUpdater	# To access DantesUpdator
+from InfraBot import UserManager
+from InfraBot import InfraManager
+from InfraBot import Database
+
+#List of users by permission level
 ownerList = []
 adminList = []
 memberList = []
@@ -20,6 +31,8 @@ memberList = []
 # Set of tokens provided by the app
 token = os.environ['BOT_TOKEN']
 verify_token = os.environ['VERIFY_TOKEN']
+commandSalt = os.environ['COMMAND_SALT']
+agentSalt = os.environ['AGENT_SALT']
 
 # Client to communicate with Slack
 sc = SlackClient(token)
@@ -28,6 +41,10 @@ sc = SlackClient(token)
 dante = DantesUpdater.DantesUpdater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
+
+# Encoder objects
+commandHashids = Hashids(salt=commandSalt)
+agentHashids = Hashids(salt=agentSalt)
 
 # Default webserver route
 @app.route("/")
@@ -71,6 +88,16 @@ def message_handle():
         print("Event not a message")
         print(content)
     return "OK"
+
+# URI for an agent with ID <id> to retrieve a list of unfetched commandIDs
+@app.route("/api/agent/<id>/command",methods=['GET']):
+def agent_id_command(id):
+    return 404
+
+# URI for an agent to get a specific command and post the result
+@app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST']):
+def agent_id_command_id(aid, cid):
+    return 404
 
 # Test route to print request information
 @app.route("/dante",methods=['POST'])
@@ -137,17 +164,22 @@ def sendEphemeral (message, sendChannel, sendUserID):
         Boolean indicating if the user has the required permissions
 '''
 def checkPermission(user, requiredPerms):
-    if not ((user in ownerList) or (user in adminList) or (user in memberList)):
-        if not findUserGroup(user):
-            return False
+    dbUser = Database.Users.query.filter_by(user_id = user).first()
+    if dbUser is None:
+        # Add user to the database
+        curPermissions = addUser(user)
+    else:
+        curPermissions = dbUser.permission_level
 
-    if user in ownerList:
+    if curPermissions == Database.permissions.owner:
+        print("User owner");
         return True
-    elif (user in adminList) and ((requiredPerms == "admin") or (requiredPerms == "member")):
+    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner):
         return True
-    elif (user in memberList) and (requiredPerms == "member"):
+    elif requiredPerms == Database.permissions.user:
         return True
     else:
+        print(curPermissions)
         return False
 
 ''' Function to find the verify a user and determine their group membership
@@ -156,7 +188,8 @@ def checkPermission(user, requiredPerms):
     Output:
         Boolean indicating success or failure
 '''
-def findUserGroup(toCheck):
+def addUser(toCheck):
+    print("Adding user")
     response = sc.api_call(
         "users.info",
         user=toCheck,
@@ -164,16 +197,24 @@ def findUserGroup(toCheck):
     )
 
     if not response['ok']:
-        return False
+        return None
     user = response['user']
 
     if user['is_owner']:
-        ownerList.append(toCheck)
+        # add owner permissions
+        newPerms = Database.permissions.owner
     elif user['is_admin']:
-        adminList.append(toCheck)
+        #add admin permissions
+        newPerms = Database.permissions.admin
     else:
-        memberList.append(toCheck)
-    return True
+        #add user permissions
+        newPerms =  Database.permissions.user
 
-if __name__ == "__InfraBot__":
-    app.run()
+    newUser = Database.Users(newPerms, 2, toCheck)
+    db.session.add(newUser)
+    db.session.commit()
+
+    return newPerms
+
+if __name__ == '__main__':
+    main()

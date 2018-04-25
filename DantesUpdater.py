@@ -6,7 +6,7 @@ from InfraBot import InfraBot
 
 Dante_Close_Hours = [1,9,17]
 
-Dante_Open_Hours = [2,10,16]
+Dante_Open_Hours = [2,10,18]
 
 
 ''' Class that defines a danteUpdater Thread. This thread is responsible for updating the

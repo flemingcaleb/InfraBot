@@ -11,9 +11,6 @@ from InfraBot import Helper
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
 from hashids import Hashids
 
-#
-import postgresql
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
 db = SQLAlchemy(app)
@@ -22,11 +19,6 @@ from InfraBot import DantesUpdater	# To access DantesUpdator
 from InfraBot import UserManager
 from InfraBot import InfraManager
 from InfraBot import Database
-
-#List of users by permission level
-ownerList = []
-adminList = []
-memberList = []
 
 # Set of tokens provided by the app
 token = os.environ['BOT_TOKEN']
@@ -90,12 +82,12 @@ def message_handle():
     return "OK"
 
 # URI for an agent with ID <id> to retrieve a list of unfetched commandIDs
-@app.route("/api/agent/<id>/command",methods=['GET']):
+@app.route("/api/agent/<id>/command",methods=['GET'])
 def agent_id_command(id):
     return 404
 
 # URI for an agent to get a specific command and post the result
-@app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST']):
+@app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST'])
 def agent_id_command_id(aid, cid):
     return 404
 

@@ -22,12 +22,15 @@ from InfraBot import Database
 
 # Set of tokens provided by the app
 token = os.environ['BOT_TOKEN']
-verify_token = os.environ['VERIFY_TOKEN']
+veritoken = os.environ['VERIFY_TOKEN']
 commandSalt = os.environ['COMMAND_SALT']
 agentSalt = os.environ['AGENT_SALT']
 
 # Client to communicate with Slack
 sc = SlackClient(token)
+
+# Dictionary of SlackClients stored by TeamID
+clientDictionary['TA4P4C7FG'] = sc, veritoken
 
 # Plugin objects
 dante = DantesUpdater.DantesUpdater()
@@ -47,6 +50,8 @@ def main():
 @app.route("/test",methods=['POST'])
 def test():
     content = request.json
+    _,verify_token = getClient(content['team_id'])
+
     if content['token'] == verify_token:
         print("Unauthorized message detected")
         return False
@@ -58,6 +63,9 @@ def test():
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
     content = request.json
+    team_id = content['team_id']
+    _,verify_token = getClient(content['team_id'])
+
     if content['token'] == verify_token:
         print("Unauthorized message detected")
         return False
@@ -69,11 +77,11 @@ def message_handle():
 
     if curEvent['type'] == 'message':
         if curEvent['text'].startswith("!dante "):
-            dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'])
+            dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'], team_id)
         elif curEvent['text'].startswith("!user "):
-            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'])
+            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'], team_id)
         elif curEvent['text'].startswith("!infra "):
-            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'])
+            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'], team_id)
         #else:
         #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
     else:
@@ -95,6 +103,7 @@ def agent_id_command_id(aid, cid):
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     content = request.json
+    _,verify_token = getClient(content['team_id'])
     if content['token'] == verify_token:
         print("Unauthorized message detected")
         return False
@@ -109,6 +118,7 @@ def dante_parse():
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     content = request.json
+    _,verify_token = getClient(content['team_id'])
     if content['token'] == verify_token:
         print("Unauthorized message detected")
         return False
@@ -123,9 +133,12 @@ def dante_start():
     Output:
         N/A
 '''
-def sendMessage (message, sendChannel):
-    print("Sending Message")
-    sc.api_call(
+def sendMessage (message, sendChannel, team_id):
+    client,_ = getClient(team_id)
+    if client is None:
+        print("Team not found: ", team_id)
+
+    client.api_call(
         "chat.postMessage",
         channel=sendChannel,
         text=message
@@ -139,8 +152,14 @@ def sendMessage (message, sendChannel):
     Output:
         N/A
 '''
-def sendEphemeral (message, sendChannel, sendUserID):
-    sc.api_call(
+def sendEphemeral (message, sendChannel, sendUserID, team_id):
+    client,_ = getClient(team_id)
+
+    if client is None:
+        print("Team not found: ", team_id)
+        return
+
+    client.api_call(
         "chat.postEphemeral",
         channel=sendChannel,
         user=sendUserID,
@@ -155,11 +174,11 @@ def sendEphemeral (message, sendChannel, sendUserID):
     Output:
         Boolean indicating if the user has the required permissions
 '''
-def checkPermission(user, requiredPerms):
+def checkPermission(user, requiredPerms, team_id):
     dbUser = Database.Users.query.filter_by(user_id = user).first()
     if dbUser is None:
         # Add user to the database
-        curPermissions = addUser(user)
+        curPermissions,_ = addUser(user, team_id)
     else:
         curPermissions = dbUser.permission_level
 
@@ -180,9 +199,13 @@ def checkPermission(user, requiredPerms):
     Output:
         Boolean indicating success or failure
 '''
-def addUser(toCheck):
+def addUser(toCheck, team_id):
     print("Adding user")
-    response = sc.api_call(
+    client,_ = getClient(team_id)
+    if client is None:
+        print("Client not found: ", team_id)
+
+    response = client.api_call(
         "users.info",
         user=toCheck,
         include_locale="false"
@@ -207,6 +230,12 @@ def addUser(toCheck):
     db.session.commit()
 
     return newPerms
+
+def getClient(team_id):
+    if not team_id in clientDictionary:
+        return None
+    else:
+        return clientDictionary[team_id]
 
 if __name__ == '__main__':
     main()

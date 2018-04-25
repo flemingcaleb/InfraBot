@@ -26,6 +26,8 @@ memberList = []
 # Set of tokens provided by the app
 token = os.environ['BOT_TOKEN']
 verify_token = os.environ['VERIFY_TOKEN']
+commandSalt = os.environ['COMMAND_SALT']
+agentSalt = os.environ['AGENT_SALT']
 
 # Client to communicate with Slack
 sc = SlackClient(token)
@@ -34,6 +36,10 @@ sc = SlackClient(token)
 dante = DantesUpdater.DantesUpdater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
+
+# Encoder objects
+commandHashids = Hashids(salt=commandSalt)
+agentHashids = Hashids(salt=agentSalt)
 
 # Default webserver route
 @app.route("/")

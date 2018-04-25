@@ -6,6 +6,7 @@ from slackclient import SlackClient
 from flask import Flask
 from flask import request
 from flask_sqlalchemy import SQLAlchemy
+from InfraBot import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
 from hashids import Hashids
@@ -14,10 +15,13 @@ from hashids import Hashids
 import postgresql
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
+db = SQLAlchemy(app)
 
 from InfraBot import DantesUpdater	# To access DantesUpdator
 from InfraBot import UserManager
 from InfraBot import InfraManager
+from InfraBot import Database
 
 #List of users by permission level
 ownerList = []

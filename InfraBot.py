@@ -5,6 +5,7 @@ from slackclient import SlackClient
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
 from flask import request
+from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
 from InfraBot import Helper
 
@@ -127,6 +128,15 @@ def dante_start():
     dante.start()
     print("Started Dantes")
     return "Started Dantes Updater"
+
+@app.route("/install",methods=['GET'])
+def install():
+    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com/install/confirm")
+
+@app.route("/install/confirm", methods=['GET'])
+def install_confirm():
+    print(request)
+
 
 ''' Function to send a message to a channel
     Input:

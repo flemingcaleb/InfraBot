@@ -53,9 +53,8 @@ def main():
 @app.route("/test",methods=['POST'])
 def test():
     content = request.json
-    _,verify_token = getClient(content['team_id'])
 
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     print("RECIEVED TEST!")
@@ -67,9 +66,8 @@ def test():
 def message_handle():
     content = request.json
     team_id = content['team_id']
-    _,verify_token = getClient(content['team_id'])
 
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     if content['type'] == "url_verification":
@@ -106,8 +104,7 @@ def agent_id_command_id(aid, cid):
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     content = request.json
-    _,verify_token = getClient(content['team_id'])
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     print(request.form)
@@ -121,8 +118,7 @@ def dante_parse():
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     content = request.json
-    _,verify_token = getClient(content['team_id'])
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     dante.start()

@@ -22,6 +22,8 @@ from InfraBot import InfraManager
 from InfraBot import Database
 
 # Set of tokens provided by the app
+clientID = os.environ['CLIENT_ID']
+clientSecret = os.environ['CLIENT_SECRET']
 veritoken = os.environ['VERIFY_TOKEN']
 commandSalt = os.environ['COMMAND_SALT']
 agentSalt = os.environ['AGENT_SALT']
@@ -119,14 +121,35 @@ def dante_start():
     print("Started Dantes")
     return "Started Dantes Updater"
 
-@app.route("/install",methods=['GET'])
-def install():
-    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com/install/confirm")
+@app.route("/install",methods=['GET']) 
+def install(): 
+    print("Install reached") 
+    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com:5000/install/confirm") 
+ 
+@app.route("/install/confirm", methods=['GET']) 
+def install_confirm(): 
+    auth = request.args.get('code') 
+    status = request.args.get('status') 
+    error = request.args.get('error') 
+ 
+    if error != None: 
+        return "You have denied access" 
 
-@app.route("/install/confirm", methods=['GET'])
-def install_confirm():
-    print(request)
+    sc = SlackClient("")
+    
+    print("Requesting tokens")
 
+    response = sc.api_call(
+        "oauth.access",
+        client_id=clientID,
+        client_secret=clientSecret,
+        code=auth
+    )
+
+    print(response)
+
+    addClient(response['bot']['bot_access_token'],response['access_token'],veritoken, response['team_id'])
+    return "Ok"
 
 ''' Function to send a message to a channel
     Input:
@@ -180,7 +203,7 @@ def checkPermission(user, requiredPerms, team_id):
     dbUser = Database.Users.query.filter_by(user_id = user).first()
     if dbUser is None:
         # Add user to the database
-        curPermissions,_ = addUser(user, team_id)
+        curPermissions = addUser(user, team_id)
     else:
         curPermissions = dbUser.permission_level
 
@@ -201,11 +224,11 @@ def checkPermission(user, requiredPerms, team_id):
     Output:
         Boolean indicating success or failure
 '''
-def addUser(toCheck, team_id):
+def addUser(toCheck, team):
     print("Adding user")
-    client,_ = getClient(team_id)
+    client,_ = getClient(team)
     if client is None:
-        print("Client not found: ", team_id)
+        print("Client not found: ", team)
 
     response = client.api_call(
         "users.info",
@@ -227,7 +250,9 @@ def addUser(toCheck, team_id):
         #add user permissions
         newPerms =  Database.permissions.user
 
-    newUser = Database.Users(newPerms, 2, toCheck)
+    dbWorkspace = Database.Workspaces.query.filter_by(team_id = team).first()
+
+    newUser = Database.Users(newPerms, dbWorkspace.id, toCheck)
     db.session.add(newUser)
     db.session.commit()
 
@@ -251,7 +276,7 @@ def getClient(toCheck):
 def addClient(bot, access, verify, team):
     newClient = Database.Workspaces(bot, access, veritoken, team)
     db.session.add(newClient)
-    sb.session.commit()
+    db.session.commit()
 
 if __name__ == '__main__':
     main()

@@ -9,6 +9,11 @@ class permissions(enum.Enum):
     user = 3
 
 class Workspaces(db.Model):
+    def __init__(self, b_tok, a_tok, v_tok, team):
+        self.bot_token = b_tok
+        self.access_token = a_tok
+        self.verify_token = v_tok
+        self.team_id = team
     id = db.Column(db.Integer, primary_key=True)
     bot_token = db.Column(db.String(100), nullable=False)
     access_token = db.Column(db.String(100), nullable=False)

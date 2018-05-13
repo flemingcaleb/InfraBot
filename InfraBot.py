@@ -203,7 +203,7 @@ def checkPermission(user, requiredPerms, team_id):
     dbUser = Database.Users.query.filter_by(user_id = user).first()
     if dbUser is None:
         # Add user to the database
-        curPermissions,_ = addUser(user, team_id)
+        curPermissions = addUser(user, team_id)
     else:
         curPermissions = dbUser.permission_level
 
@@ -224,11 +224,11 @@ def checkPermission(user, requiredPerms, team_id):
     Output:
         Boolean indicating success or failure
 '''
-def addUser(toCheck, team_id):
+def addUser(toCheck, team):
     print("Adding user")
-    client,_ = getClient(team_id)
+    client,_ = getClient(team)
     if client is None:
-        print("Client not found: ", team_id)
+        print("Client not found: ", team)
 
     response = client.api_call(
         "users.info",
@@ -250,7 +250,9 @@ def addUser(toCheck, team_id):
         #add user permissions
         newPerms =  Database.permissions.user
 
-    newUser = Database.Users(newPerms, 2, toCheck)
+    dbWorkspace = Database.Workspaces.query.filter_by(team_id = team).first()
+
+    newUser = Database.Users(newPerms, dbWorkspace.id, toCheck)
     db.session.add(newUser)
     db.session.commit()
 

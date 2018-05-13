@@ -22,6 +22,8 @@ from InfraBot import InfraManager
 from InfraBot import Database
 
 # Set of tokens provided by the app
+clientID = os.environ['CLIENT_ID']
+clientSecret = os.environ['CLIENT_SECRET']
 veritoken = os.environ['VERIFY_TOKEN']
 commandSalt = os.environ['COMMAND_SALT']
 agentSalt = os.environ['AGENT_SALT']
@@ -119,14 +121,35 @@ def dante_start():
     print("Started Dantes")
     return "Started Dantes Updater"
 
-@app.route("/install",methods=['GET'])
-def install():
-    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com/install/confirm")
+@app.route("/install",methods=['GET']) 
+def install(): 
+    print("Install reached") 
+    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com:5000/install/confirm") 
+ 
+@app.route("/install/confirm", methods=['GET']) 
+def install_confirm(): 
+    auth = request.args.get('code') 
+    status = request.args.get('status') 
+    error = request.args.get('error') 
+ 
+    if error != None: 
+        return "You have denied access" 
 
-@app.route("/install/confirm", methods=['GET'])
-def install_confirm():
-    print(request)
+    sc = SlackClient("")
+    
+    print("Requesting tokens")
 
+    response = sc.api_call(
+        "oauth.access",
+        client_id=clientID,
+        client_secret=clientSecret,
+        code=auth
+    )
+
+    print(response)
+
+    addClient(response['bot']['bot_access_token'],response['access_token'],veritoken, response['team_id'])
+    return "Ok"
 
 ''' Function to send a message to a channel
     Input:
@@ -251,7 +274,7 @@ def getClient(toCheck):
 def addClient(bot, access, verify, team):
     newClient = Database.Workspaces(bot, access, veritoken, team)
     db.session.add(newClient)
-    sb.session.commit()
+    db.session.commit()
 
 if __name__ == '__main__':
     main()

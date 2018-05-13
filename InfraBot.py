@@ -22,18 +22,12 @@ from InfraBot import InfraManager
 from InfraBot import Database
 
 # Set of tokens provided by the app
-token = os.environ['BOT_TOKEN']
 veritoken = os.environ['VERIFY_TOKEN']
 commandSalt = os.environ['COMMAND_SALT']
 agentSalt = os.environ['AGENT_SALT']
 
-# Client to communicate with Slack
-sc = SlackClient(token)
-
-
-clientDictionary = {}
 # Dictionary of SlackClients stored by TeamID
-clientDictionary['TA4P4C7FG'] = sc, veritoken
+clientDictionary = {}
 
 # Plugin objects
 dante = DantesUpdater.DantesUpdater()
@@ -239,11 +233,25 @@ def addUser(toCheck, team_id):
 
     return newPerms
 
-def getClient(team_id):
-    if not team_id in clientDictionary:
-        return None
+def getClient(toCheck):
+    if not toCheck in clientDictionary:
+        #Check for workspace in DB
+        dbWorkspace = Database.Workspaces.query.filter_by(team_id = toCheck).first()
+        if dbWorkspace is None:
+            print("Workspace not found in database")
+            return None
+        else:
+            #Open a SlackClient 
+            newClient = SlackClient(dbWorkspace.bot_token)
+            clientDictionary[toCheck] = newClient, dbWorkspace.verify_token
+            return newClient, dbWorkspace.verify_token
     else:
-        return clientDictionary[team_id]
+        return clientDictionary[toCheck]
+
+def addClient(bot, access, verify, team):
+    newClient = Database.Workspaces(bot, access, veritoken, team)
+    db.session.add(newClient)
+    sb.session.commit()
 
 if __name__ == '__main__':
     main()

@@ -6,7 +6,7 @@ from InfraBot import InfraBot
 
 Dante_Close_Hours = [1,9,17]
 
-Dante_Open_Hours = [2,10,16]
+Dante_Open_Hours = [2,10,18]
 
 
 ''' Class that defines a danteUpdater Thread. This thread is responsible for updating the
@@ -16,33 +16,33 @@ class DantesUpdater:
     def __init__(self):
         self.__curThread = DantesUpdater_Thread()
 
-    def api_entry(self, message, channel, user):
+    def api_entry(self, message, channel, user, team_id):
         if message == "start":
-            if not InfraBot.checkPermission(user, "admin"):
-                InfraBot.sendEphemeral("Access Denied", channel, user)
+            if not InfraBot.checkPermission(user, "admin", team_id):
+                InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"
             if self.__curThread.status():
                 self.__curThread.stop()
                 self.__curThread = DantesUpdater_Thread()
                 self.__curThread.start()
-                InfraBot.sendEphemeral("Restarted Dantes Updater", channel, user)
+                InfraBot.sendEphemeral("Restarted Dantes Updater", channel, user, team_id)
             else:
                 self.__curThread.start()
-                InfraBot.sendEphemeral("Started Dantes Updater", channel, user)
+                InfraBot.sendEphemeral("Started Dantes Updater", channel, user, team_id)
             return "Started Dantes Updater"
         elif message == "stop":
-            if not InfraBot.checkPermission(user, "admin"):
-                InfraBot.sendEphemeral("Access Denied", channel, user)
+            if not InfraBot.checkPermission(user, "admin", team_id):
+                InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"
             self.__curThread.stop()
             self.__curThread = DantesUpdater_Thread()
-            InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user)
+            InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user, team_id)
             return "Stopped Dantes Updater"
         elif message == "status":
             if self.__curThread.status():
-                InfraBot.sendMessage("Status: Running", channel)
+                InfraBot.sendMessage("Status: Running", channel, team_id)
             else:
-                InfraBot.sendMessage("Status: Stopped", channel)
+                InfraBot.sendMessage("Status: Stopped", channel, team_id)
         else:
             return "Command not found"
 
@@ -92,7 +92,7 @@ class DantesUpdater_Thread(threading.Thread):
                     self.__longSleep = True
 
             if self.__send:
-                InfraBot.sendMessage(self.__message, "#general")
+                InfraBot.sendMessage(self.__message, "#general", 'TA4P4C7FG')
                 self.__send = False
 
             if self.__longSleep:

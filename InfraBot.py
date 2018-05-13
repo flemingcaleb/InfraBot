@@ -1,33 +1,44 @@
 import os				# To access tokens
-from InfraBot import DantesUpdater	# To access DantesUpdator
-from InfraBot import UserManager
-from InfraBot import InfraManager
 
 # Copyright (c) 2015-2016 Slack Technologies, Inc
 from slackclient import SlackClient
-
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
 from flask import request
+from flask import redirect
+from flask_sqlalchemy import SQLAlchemy
+from InfraBot import Helper
+
+# Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
+from hashids import Hashids
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
+db = SQLAlchemy(app)
 
-# List of users by permission level
-ownerList = []
-adminList = []
-memberList = []
+from InfraBot import DantesUpdater	# To access DantesUpdator
+from InfraBot import UserManager
+from InfraBot import InfraManager
+from InfraBot import Database
 
 # Set of tokens provided by the app
-token = os.environ['BOT_TOKEN']
-verify_token = os.environ['VERIFY_TOKEN']
+clientID = os.environ['CLIENT_ID']
+clientSecret = os.environ['CLIENT_SECRET']
+veritoken = os.environ['VERIFY_TOKEN']
+commandSalt = os.environ['COMMAND_SALT']
+agentSalt = os.environ['AGENT_SALT']
 
-# Client to communicate with Slack
-sc = SlackClient(token)
+# Dictionary of SlackClients stored by TeamID
+clientDictionary = {}
 
 # Plugin objects
 dante = DantesUpdater.DantesUpdater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
+
+# Encoder objects
+commandHashids = Hashids(salt=commandSalt)
+agentHashids = Hashids(salt=agentSalt)
 
 # Default webserver route
 @app.route("/")
@@ -38,7 +49,8 @@ def main():
 @app.route("/test",methods=['POST'])
 def test():
     content = request.json
-    if content['token'] == verify_token:
+
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     print("RECIEVED TEST!")
@@ -49,7 +61,9 @@ def test():
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
     content = request.json
-    if content['token'] == verify_token:
+    team_id = content['team_id']
+
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     if content['type'] == "url_verification":
@@ -60,11 +74,11 @@ def message_handle():
 
     if curEvent['type'] == 'message':
         if curEvent['text'].startswith("!dante "):
-            dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'])
+            dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'], team_id)
         elif curEvent['text'].startswith("!user "):
-            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'])
+            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'], team_id)
         elif curEvent['text'].startswith("!infra "):
-            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'])
+            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'], team_id)
         #else:
         #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
     else:
@@ -72,11 +86,21 @@ def message_handle():
         print(content)
     return "OK"
 
+# URI for an agent with ID <id> to retrieve a list of unfetched commandIDs
+@app.route("/api/agent/<id>/command",methods=['GET'])
+def agent_id_command(id):
+    return 404
+
+# URI for an agent to get a specific command and post the result
+@app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST'])
+def agent_id_command_id(aid, cid):
+    return 404
+
 # Test route to print request information
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     content = request.json
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     print(request.form)
@@ -90,12 +114,42 @@ def dante_parse():
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     content = request.json
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     dante.start()
     print("Started Dantes")
     return "Started Dantes Updater"
+
+@app.route("/install",methods=['GET']) 
+def install(): 
+    print("Install reached") 
+    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com:5000/install/confirm") 
+ 
+@app.route("/install/confirm", methods=['GET']) 
+def install_confirm(): 
+    auth = request.args.get('code') 
+    status = request.args.get('status') 
+    error = request.args.get('error') 
+ 
+    if error != None: 
+        return "You have denied access" 
+
+    sc = SlackClient("")
+    
+    print("Requesting tokens")
+
+    response = sc.api_call(
+        "oauth.access",
+        client_id=clientID,
+        client_secret=clientSecret,
+        code=auth
+    )
+
+    print(response)
+
+    addClient(response['bot']['bot_access_token'],response['access_token'],veritoken, response['team_id'])
+    return "Ok"
 
 ''' Function to send a message to a channel
     Input:
@@ -104,9 +158,12 @@ def dante_start():
     Output:
         N/A
 '''
-def sendMessage (message, sendChannel):
-    print("Sending Message")
-    sc.api_call(
+def sendMessage (message, sendChannel, team_id):
+    client,_ = getClient(team_id)
+    if client is None:
+        print("Team not found: ", team_id)
+
+    client.api_call(
         "chat.postMessage",
         channel=sendChannel,
         text=message
@@ -120,8 +177,14 @@ def sendMessage (message, sendChannel):
     Output:
         N/A
 '''
-def sendEphemeral (message, sendChannel, sendUserID):
-    sc.api_call(
+def sendEphemeral (message, sendChannel, sendUserID, team_id):
+    client,_ = getClient(team_id)
+
+    if client is None:
+        print("Team not found: ", team_id)
+        return
+
+    client.api_call(
         "chat.postEphemeral",
         channel=sendChannel,
         user=sendUserID,
@@ -136,18 +199,23 @@ def sendEphemeral (message, sendChannel, sendUserID):
     Output:
         Boolean indicating if the user has the required permissions
 '''
-def checkPermission(user, requiredPerms):
-    if not ((user in ownerList) or (user in adminList) or (user in memberList)):
-        if not findUserGroup(user):
-            return False
+def checkPermission(user, requiredPerms, team_id):
+    dbUser = Database.Users.query.filter_by(user_id = user).first()
+    if dbUser is None:
+        # Add user to the database
+        curPermissions = addUser(user, team_id)
+    else:
+        curPermissions = dbUser.permission_level
 
-    if user in ownerList:
+    if curPermissions == Database.permissions.owner:
+        print("User owner");
         return True
-    elif (user in adminList) and ((requiredPerms == "admin") or (requiredPerms == "member")):
+    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner):
         return True
-    elif (user in memberList) and (requiredPerms == "member"):
+    elif requiredPerms == Database.permissions.user:
         return True
     else:
+        print(curPermissions)
         return False
 
 ''' Function to find the verify a user and determine their group membership
@@ -156,24 +224,59 @@ def checkPermission(user, requiredPerms):
     Output:
         Boolean indicating success or failure
 '''
-def findUserGroup(toCheck):
-    response = sc.api_call(
+def addUser(toCheck, team):
+    print("Adding user")
+    client,_ = getClient(team)
+    if client is None:
+        print("Client not found: ", team)
+
+    response = client.api_call(
         "users.info",
         user=toCheck,
         include_locale="false"
     )
 
     if not response['ok']:
-        return False
+        return None
     user = response['user']
 
     if user['is_owner']:
-        ownerList.append(toCheck)
+        # add owner permissions
+        newPerms = Database.permissions.owner
     elif user['is_admin']:
-        adminList.append(toCheck)
+        #add admin permissions
+        newPerms = Database.permissions.admin
     else:
-        memberList.append(toCheck)
-    return True
+        #add user permissions
+        newPerms =  Database.permissions.user
 
-if __name__ == "__InfraBot__":
-    app.run()
+    dbWorkspace = Database.Workspaces.query.filter_by(team_id = team).first()
+
+    newUser = Database.Users(newPerms, dbWorkspace.id, toCheck)
+    db.session.add(newUser)
+    db.session.commit()
+
+    return newPerms
+
+def getClient(toCheck):
+    if not toCheck in clientDictionary:
+        #Check for workspace in DB
+        dbWorkspace = Database.Workspaces.query.filter_by(team_id = toCheck).first()
+        if dbWorkspace is None:
+            print("Workspace not found in database")
+            return None
+        else:
+            #Open a SlackClient 
+            newClient = SlackClient(dbWorkspace.bot_token)
+            clientDictionary[toCheck] = newClient, dbWorkspace.verify_token
+            return newClient, dbWorkspace.verify_token
+    else:
+        return clientDictionary[toCheck]
+
+def addClient(bot, access, verify, team):
+    newClient = Database.Workspaces(bot, access, veritoken, team)
+    db.session.add(newClient)
+    db.session.commit()
+
+if __name__ == '__main__':
+    main()

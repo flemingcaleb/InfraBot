@@ -5,6 +5,7 @@ from slackclient import SlackClient
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
 from flask import request
+from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
 from InfraBot import Helper
 
@@ -21,18 +22,12 @@ from InfraBot import InfraManager
 from InfraBot import Database
 
 # Set of tokens provided by the app
-token = os.environ['BOT_TOKEN']
 veritoken = os.environ['VERIFY_TOKEN']
 commandSalt = os.environ['COMMAND_SALT']
 agentSalt = os.environ['AGENT_SALT']
 
-# Client to communicate with Slack
-sc = SlackClient(token)
-
-
-clientDictionary = {}
 # Dictionary of SlackClients stored by TeamID
-clientDictionary['TA4P4C7FG'] = sc, veritoken
+clientDictionary = {}
 
 # Plugin objects
 dante = DantesUpdater.DantesUpdater()
@@ -52,9 +47,8 @@ def main():
 @app.route("/test",methods=['POST'])
 def test():
     content = request.json
-    _,verify_token = getClient(content['team_id'])
 
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     print("RECIEVED TEST!")
@@ -66,9 +60,8 @@ def test():
 def message_handle():
     content = request.json
     team_id = content['team_id']
-    _,verify_token = getClient(content['team_id'])
 
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     if content['type'] == "url_verification":
@@ -105,8 +98,7 @@ def agent_id_command_id(aid, cid):
 @app.route("/dante",methods=['POST'])
 def dante_parse():
     content = request.json
-    _,verify_token = getClient(content['team_id'])
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     print(request.form)
@@ -120,13 +112,21 @@ def dante_parse():
 @app.route("/dante/start",methods=['POST'])
 def dante_start():
     content = request.json
-    _,verify_token = getClient(content['team_id'])
-    if content['token'] == verify_token:
+    if content['token'] == veritoken:
         print("Unauthorized message detected")
         return False
     dante.start()
     print("Started Dantes")
     return "Started Dantes Updater"
+
+@app.route("/install",methods=['GET'])
+def install():
+    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com/install/confirm")
+
+@app.route("/install/confirm", methods=['GET'])
+def install_confirm():
+    print(request)
+
 
 ''' Function to send a message to a channel
     Input:
@@ -233,11 +233,25 @@ def addUser(toCheck, team_id):
 
     return newPerms
 
-def getClient(team_id):
-    if not team_id in clientDictionary:
-        return None
+def getClient(toCheck):
+    if not toCheck in clientDictionary:
+        #Check for workspace in DB
+        dbWorkspace = Database.Workspaces.query.filter_by(team_id = toCheck).first()
+        if dbWorkspace is None:
+            print("Workspace not found in database")
+            return None
+        else:
+            #Open a SlackClient 
+            newClient = SlackClient(dbWorkspace.bot_token)
+            clientDictionary[toCheck] = newClient, dbWorkspace.verify_token
+            return newClient, dbWorkspace.verify_token
     else:
-        return clientDictionary[team_id]
+        return clientDictionary[toCheck]
+
+def addClient(bot, access, verify, team):
+    newClient = Database.Workspaces(bot, access, veritoken, team)
+    db.session.add(newClient)
+    sb.session.commit()
 
 if __name__ == '__main__':
     main()

@@ -5,8 +5,8 @@
 - /api/messages : URI for event notifications
 -----------------------------------------------------------------------
 ## Agent API
-- /api/agent/<id>/command : Allows a registered agent to fetch a list of pending command IDs
-- /api/agent/<aid>/command/<cid> : Allows a registered agent to GET the command corresponding to <cid> and POST the results from command id <cid>
+- /api/agent/\<id\>/command : Allows a registered agent to fetch a list of pending command IDs
+- /api/agent/\<aid\>/command/<cid> : Allows a registered agent to GET the command corresponding to <cid> and POST the results from command id <cid>
 -----------------------------------------------------------------------
 ## Module API
 Must provide function:

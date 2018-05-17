@@ -53,10 +53,28 @@ Provided helper functions:
  command          | text        |
  result           | text        |
  
+ ### Table: updates
+ | Column Name    | Type        | Notes
+ | :------------: | :---------: | :--------
+ | id             | int         |
+ | reminder       | varchar(100)| String containing the update to send *NOTE: Max length is 100 characters*
+ | channel_id     | varchar(20) | String indicating the channel to send the update to
+ | type           | update_type | enum
+ | time           | int         | Int indicating the number of minutes between updates or minutes after midnight to update
+ | user_id        | int         | FOREIGN KEY to users.id
+ | workspace_id   | int         | FOREIGN KEY to workspaces.id
+ 
  ### Enum: permissions
   |  Value  |
   | :-----: |
   | 'owner' |
   | 'admin' |
   | 'user'  |
+  
+  ### Enum: update_type
+  |  Value  |
+  | :-----: |
+  |   'in'  |
+  | 'every' |
+  |  'for'  |
   -----------------------------------------------------------------------------------

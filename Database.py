@@ -8,6 +8,11 @@ class permissions(enum.Enum):
     admin = 2
     user = 3
 
+class update_type(enum.Enum):
+    in = 1
+    every = 2
+    for = 3
+
 class Workspaces(db.Model):
     def __init__(self, b_tok, a_tok, v_tok, team):
         self.bot_token = b_tok

@@ -1,3 +1,4 @@
+import threading
 from app import InfraBot
 from app import Database
 
@@ -6,9 +7,15 @@ db = InfraBot.db
 class Updater:
     def api_entry(self, message, channel, user, team_id):
         if message.startswith("in "):
+            remainder = message[len("in "):]
+            splitNum = remainder.split(' ', 1)
+            number = int(splitNum[0])
+
+            self.__inReminder = Updater_InThread(splitNum[1], number, channel, team_id)
+            self.__inReminder.start()
             #Schedule reminder in X minutes
-            InfraBot.sendEphemeral("Command Not Found: 'in'", channel, user, team_id)
-            return "Command not yet found"
+            InfraBot.sendEphemeral("Update Scheduled", channel, user, team_id)
+            return "Reminder Scheduled"
 
         elif message.startswith("every "):
             #Schedule reminder every X minutes
@@ -33,3 +40,19 @@ class Updater:
         else:
             InfraBot.sendEphemeral("Command Not Found", channel, user, team_id)
             return "Command not found"
+
+''' Updater to handle a single update in the future '''
+class Updater_InThread(threading.Thread):
+    ''' Function to initialize the thread with the time to wait and message information '''
+    def __init__(self, message, time, channel, workspace):
+        threading.Thread.__init__(self)
+        self.waitTime = time
+        self.updateMessage = message
+        self.updateChannel = channel
+        self.updateWorkspace = workspace
+
+    ''' Function that waits for the configured amount of time and then sends the configured
+        message on the given channel in the given workspace '''
+    def run(self)
+        sleep(self.waitTime)
+        InfraBot.sendMessage(self.updateMessage, self.updateChannel, self.updateWorkspace)

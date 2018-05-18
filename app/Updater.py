@@ -57,3 +57,43 @@ class Updater_InThread(threading.Thread):
     def run(self):
         sleep(self.waitTime * 60)
         InfraBot.sendMessage(self.updateMessage, self.updateChannel, self.updateWorkspace)
+
+''' Updater to handle recurring updates on an interval '''
+class Updater_EveryThread(threading.Thread):
+    ''' Function to initialize thread with time between updates and mesesage information '''
+    def __init__(self, message, time, channel, workspace):
+        threading.Thread.__init__(self)
+        self.waitTime = time
+        self.updateMessage = message
+        self.updateChannel = channel
+        self.updateWorkspace = workspace
+        self.__lock = threading.Lock()
+        self.__continue = True
+
+    ''' Function that waits the configured amount of time between updates until it is
+        told to stop '''
+    def run(self):
+        while(True):
+            sleep(self.waitTime * 60)
+
+            self.__lock.acquire()
+            if not self.__continue:
+                self.__lock.release()
+                break
+            else:
+                self.__lock.release()
+
+            InfraBot.sendMessage(self.updateMessage, self.updateChannel, self.updateWorkspace)
+
+    ''' Function that stops the update thread '''
+    def stop (self):
+        self.__lock.acquire()
+        self.__continue = False
+        self.__lock.release()
+
+    ''' Function that returns the status of the update thread '''
+    def status (self):
+        self.__lock.acquire()
+        status = self.__continue
+        self.__lock.release()
+        return status

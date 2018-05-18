@@ -133,7 +133,7 @@ class DantesUpdater_Thread(threading.Thread):
             self.start_loop
 
         if not (newChannel, newTeam) in self.__updateList:
-            self.__updateList.append(newChannel,newTeam)
+            self.__updateList.append((newChannel,newTeam))
             print("Dantes Updater: Added new channel to Update List")
 
         else:

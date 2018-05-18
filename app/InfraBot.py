@@ -82,7 +82,7 @@ def message_handle():
         elif curEvent['text'].startswith("!infra "):
             infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'], team_id)
         elif curEvent['text'].startswith("!update "):
-            update.api_entry(curEvent['text'][len("!update ":], curEvent['channel'], curEvent['user'],team_id)
+            update.api_entry(curEvent['text'][len("!update "):], curEvent['channel'], curEvent['user'],team_id)
         #else:
         #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
     else:

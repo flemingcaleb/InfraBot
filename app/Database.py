@@ -1,5 +1,5 @@
 import enum
-from InfraBot import InfraBot
+from app import InfraBot
 
 db = InfraBot.db
 
@@ -9,9 +9,9 @@ class permissions(enum.Enum):
     user = 3
 
 class update_type(enum.Enum):
-    in = 1
-    every = 2
-    for = 3
+    IN = 1
+    EVERY = 2
+    FOR = 3
 
 class Workspaces(db.Model):
     def __init__(self, b_tok, a_tok, v_tok, team):
@@ -69,4 +69,5 @@ class Updates(db.Model):
     type = db.Column('type', db.Enum(update_type), nullable=False)
     time = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    workspace_id = db.column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
+

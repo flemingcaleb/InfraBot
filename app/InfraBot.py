@@ -7,7 +7,7 @@ from flask import Flask
 from flask import request
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
-from InfraBot import Helper
+from app import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
 from hashids import Hashids
@@ -16,10 +16,10 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
 db = SQLAlchemy(app)
 
-from InfraBot import DantesUpdater	# To access DantesUpdator
-from InfraBot import UserManager
-from InfraBot import InfraManager
-from InfraBot import Database
+from app import DantesUpdater	# To access DantesUpdator
+from app import UserManager
+from app import InfraManager
+from app import Database
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']

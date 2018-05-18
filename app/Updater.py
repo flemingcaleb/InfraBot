@@ -1,4 +1,5 @@
 import threading
+from time import sleep
 from app import InfraBot
 from app import Database
 
@@ -53,6 +54,6 @@ class Updater_InThread(threading.Thread):
 
     ''' Function that waits for the configured amount of time and then sends the configured
         message on the given channel in the given workspace '''
-    def run(self)
-        sleep(self.waitTime)
+    def run(self):
+        sleep(self.waitTime * 60)
         InfraBot.sendMessage(self.updateMessage, self.updateChannel, self.updateWorkspace)

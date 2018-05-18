@@ -7,7 +7,7 @@ from flask import Flask
 from flask import request
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
-from InfraBot import Helper
+from app import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
 from hashids import Hashids
@@ -16,10 +16,11 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
 db = SQLAlchemy(app)
 
-from InfraBot import DantesUpdater	# To access DantesUpdator
-from InfraBot import UserManager
-from InfraBot import InfraManager
-from InfraBot import Database
+from app import DantesUpdater	# To access DantesUpdator
+from app import Updater
+from app import UserManager
+from app import InfraManager
+from app import Database
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -35,6 +36,7 @@ clientDictionary = {}
 dante = DantesUpdater.DantesUpdater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
+update = Updater.Updater()
 
 # Encoder objects
 commandHashids = Hashids(salt=commandSalt)
@@ -79,6 +81,8 @@ def message_handle():
             user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'], team_id)
         elif curEvent['text'].startswith("!infra "):
             infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'], team_id)
+        elif curEvent['text'].startswith("!update "):
+            update.api_entry(curEvent['text'][len("!update "):], curEvent['channel'], curEvent['user'],team_id)
         #else:
         #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
     else:
@@ -121,22 +125,22 @@ def dante_start():
     print("Started Dantes")
     return "Started Dantes Updater"
 
-@app.route("/install",methods=['GET']) 
-def install(): 
-    print("Install reached") 
-    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com:5000/install/confirm") 
- 
-@app.route("/install/confirm", methods=['GET']) 
-def install_confirm(): 
-    auth = request.args.get('code') 
-    status = request.args.get('status') 
-    error = request.args.get('error') 
- 
-    if error != None: 
-        return "You have denied access" 
+@app.route("/install",methods=['GET'])
+def install():
+    print("Install reached")
+    return redirect("https://slack.com/oauth/authorize?scope=commands,bot,channels:read,groups:read,im:read,mpim:read&client_id=344786415526.344950175959&redirect_url=slack.flemingcaleb.com:5000/install/confirm")
+
+@app.route("/install/confirm", methods=['GET'])
+def install_confirm():
+    auth = request.args.get('code')
+    status = request.args.get('status')
+    error = request.args.get('error')
+
+    if error != None:
+        return "You have denied access"
 
     sc = SlackClient("")
-    
+
     print("Requesting tokens")
 
     response = sc.api_call(
@@ -266,7 +270,7 @@ def getClient(toCheck):
             print("Workspace not found in database")
             return None
         else:
-            #Open a SlackClient 
+            #Open a SlackClient
             newClient = SlackClient(dbWorkspace.bot_token)
             clientDictionary[toCheck] = newClient, dbWorkspace.verify_token
             return newClient, dbWorkspace.verify_token

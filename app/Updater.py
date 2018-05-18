@@ -23,12 +23,12 @@ class Updater:
             #List all recurring tasks
             sendEphemeral("Command Not Found: 'list'", channel, user, team_id)
             return "Command not yet found"
-        
-        elif message.startswith("stop ")
+
+        elif message.startswith("stop "):
             #Stop reminder with the given ID
             sendEphemeral("Command Not Found: 'list'", channel, user, team_id)
             return "Command not yet found"
-        
+
         else:
             sendEphemeral("Command Not Found", channel, user, team_id)
             return "Command not found"

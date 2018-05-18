@@ -1,6 +1,7 @@
 from app import InfraBot
-#from app import db
 from app import Database
+
+db = InfraBot.db
 
 class Updater:
     def api_entry(self, message, channel, user, team_id):

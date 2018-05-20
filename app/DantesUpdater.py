@@ -143,8 +143,8 @@ class DantesUpdater_Thread(threading.Thread):
 
     def remove_list (self, remChannel, remTeam):
         self.__listLock.acquire()
-        if (newChannel, newTeam) in self.__updateList:
-            self.__updateList.remove((newChannel, newTeam))
+        if (remChannel, remTeam) in self.__updateList:
+            self.__updateList.remove((remChannel, remTeam))
             print("Dantes Updater: Removed channel from Update List")
 
         else:

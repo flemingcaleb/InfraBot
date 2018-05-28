@@ -88,10 +88,10 @@ def message_handle():
             command = curEvent['text'][1:]
             key = command.split(' ', 1)[0]
             if key in commandDict:
-                commandDict[key](command[len(key):], curEvent['channel'], curEvent['user'], team_id)
+                commandDict[key](command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
             else:
                 print("Command Not Found")
-                sendEphemeral("Command Not Found", curEvent['channel'], curEvent['user'], team_id)
+                sendEphemeral("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
     else:
         print("Event not a message")
         print(content)

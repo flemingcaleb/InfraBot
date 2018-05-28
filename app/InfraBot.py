@@ -21,6 +21,7 @@ from app import Updater
 from app import UserManager
 from app import InfraManager
 from app import Database
+from app import AgentManager
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -43,6 +44,7 @@ commandDict = {
         'infra':infra.api_entry,
         'user':user.api_entry,
         'update':update.api_entry,
+        'agent':AgentManager.api_entry
         }
 
 # Encoder objects

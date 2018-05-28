@@ -38,6 +38,13 @@ user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 update = Updater.Updater()
 
+commandDict = {
+        'dante':dante.api_entry,
+        'infra':infra.api_entry,
+        'user':user.api_entry,
+        'update':update.api_entry,
+        }
+
 # Encoder objects
 commandHashids = Hashids(salt=commandSalt)
 agentHashids = Hashids(salt=agentSalt)
@@ -75,16 +82,14 @@ def message_handle():
     curEvent = content['event']
 
     if curEvent['type'] == 'message':
-        if curEvent['text'].startswith("!dante "):
-            dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'], team_id)
-        elif curEvent['text'].startswith("!user "):
-            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'], team_id)
-        elif curEvent['text'].startswith("!infra "):
-            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'], team_id)
-        elif curEvent['text'].startswith("!update "):
-            update.api_entry(curEvent['text'][len("!update "):], curEvent['channel'], curEvent['user'],team_id)
-        #else:
-        #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
+        if curEvent['text'].startswith("!"):
+            command = curEvent['text'][1:]
+            key = command.split(' ', 1)[0]
+            if key in commandDict:
+                commandDict[key](command[len(key):], curEvent['channel'], curEvent['user'], team_id)
+            else:
+                print("Command Not Found")
+                sendEphemeral("Command Not Found", curEvent['channel'], curEvent['user'], team_id)
     else:
         print("Event not a message")
         print(content)

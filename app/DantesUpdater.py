@@ -129,9 +129,6 @@ class DantesUpdater_Thread(threading.Thread):
 
     def add_list (self, newChannel, newTeam):
         self.__listLock.acquire()
-        if self.__updateList == []:
-            self.start_loop
-
         if not (newChannel, newTeam) in self.__updateList:
             self.__updateList.append((newChannel,newTeam))
             print("Dantes Updater: Added new channel to Update List")
@@ -149,9 +146,6 @@ class DantesUpdater_Thread(threading.Thread):
 
         else:
             print("Dantes Updater: Channel not in Update List")
-
-        if self.__updateList == []:
-            self.stop()
 
         self.__listLock.release()
 

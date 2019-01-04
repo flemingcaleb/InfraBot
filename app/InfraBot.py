@@ -63,13 +63,13 @@ def main():
 # URI for /test command
 @app.route("/test",methods=['GET','POST'])
 def test():
-    content = request.json
+    content = request.form
 
-    if content['token'] == veritoken:
+    if content['token'] != veritoken:
         print("Unauthorized message detected")
-        return False
+        return 401
     print("RECIEVED TEST!")
-    sendMessage("Hello from /test", "#general")
+    sendMessage("Hello from /test", content['channel_id'], content['team_id'])
     return "Test Sent, did you see the prompt?"
 
 # URI for event subscription notifications

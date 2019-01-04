@@ -38,8 +38,9 @@ class Workspaces(db.Model):
     #status = db.relationship('', backref='workspace', lazy=True)
 
 class Status(db.Model):
-    def __init__(self):
-        pass
+    def __init__(self, workspace_id, initStatus):
+        self.workspace = workspace_id
+        self.status = initStatus
 
     workspace = db.Column(db.Integer, db.ForeignKey('workspaces.id'), primary_key=True)
     status = db.Column('status', db.Enum(status_code), nullable=False)

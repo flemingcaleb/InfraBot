@@ -21,7 +21,10 @@ class StatusManager:
         curStatus = Database.Status.query.filter_by(workspace = self.workspaces[team_id]).first()
         if curStatus is None:
             # Create new status
-            pass
+            newStatus = Database.Status(self.workspaces[team_id], statusType.GREEN)
+            Database.db.session.add(newStatus)
+            Database.db.session.commit()
+            curStatus = newStatus
 
         if message is "":
             InfraBot.sendMessage("Status: " + curStatus.status.name, channel, team_id)

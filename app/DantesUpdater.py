@@ -14,6 +14,7 @@ Dante_Open_Hours = [2,10,18]
 class Dantes_Updater:
     def __init__(self):
         self.__curThread = DantesUpdater_Thread()
+        self.__curThread.setDaemon(True)
         self.__curThread.start()
 
     def api_entry(self, message, channel, user, team_id):

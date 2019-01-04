@@ -114,6 +114,7 @@ def slash_set_admin_channel():
 
     print("Channel: ", channel)
     if not checkPermission(user, "owner", team_id):
+        print(user + " attempted to set admin channel of workspace " + team_id)
         sendEphemeral("Access Denied - Must be Owner to set admin channel", channel, user, team_id)
         return ('', 200)
 
@@ -246,12 +247,11 @@ def checkPermission(user, requiredPerms, team_id):
     if curPermissions == Database.permissions.owner:
         print("User owner");
         return True
-    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner):
+    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner.name):
         return True
-    elif requiredPerms == Database.permissions.user:
+    elif requiredPerms == Database.permissions.user.name:
         return True
     else:
-        print(curPermissions)
         return False
 
 ''' Function to find the verify a user and determine their group membership

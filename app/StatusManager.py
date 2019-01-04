@@ -7,15 +7,11 @@ class StatusManager:
     def __init__ (self):
         queries = Database.Status.query.all();
         for workspace in queries:
-            print("Workspace: ", queries[0].workspace)
-            print("Status: ", queries[0].status)
             dbWorkspace = Database.Workspaces.query.filter_by(id = workspace.workspace).first()
             if dbWorkspace is None:
                 print("Workspace does not exist in database")
             else:
                 self.workspaces[dbWorkspace.team_id] = workspace.workspace
-        
-        print(self.workspaces)
 
     def api_entry(self, message, channel, user, team_id):
         if not team_id in self.workspaces:

@@ -23,6 +23,7 @@ import UserManager
 import InfraManager
 import Database
 import AgentManager
+import StatusManager
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -39,13 +40,15 @@ dante = DantesUpdater.Dantes_Updater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 update = Updater.Updater()
+status = StatusManager.StatusManager()
 
 commandDict = {
         'dante':dante.api_entry,
         'infra':infra.api_entry,
         'user':user.api_entry,
         'update':update.api_entry,
-        'agent':AgentManager.api_entry
+        'agent':AgentManager.api_entry,
+        'status':status.api_entry
         }
 
 # Encoder objects
@@ -85,7 +88,7 @@ def message_handle():
     team_id = content['team_id']
     
     if curEvent['type'] == 'message':
-        if curEvent['text'].startswith("!"):
+        if 'text' in curEvent and curEvent['text'].startswith("!"):
             command = curEvent['text'][1:]
             key = command.split(' ', 1)[0]
             if key in commandDict:
@@ -93,6 +96,8 @@ def message_handle():
             else:
                 print("Command Not Found")
                 sendEphemeral("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
+        else:
+            print("Message contains no text")
     else:
         print("Event not a message")
         print(content)

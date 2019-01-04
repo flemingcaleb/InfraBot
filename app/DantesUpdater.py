@@ -124,7 +124,7 @@ class DantesUpdater_Thread(threading.Thread):
             status = True
         else:
             status = False
-        self.__lock.release()
+        self.__listLock.release()
         return status
 
     def add_list (self, newChannel, newTeam):

@@ -1,7 +1,7 @@
 import threading
 from time import sleep
-from app import InfraBot
-from app import Database
+import InfraBot
+import Database
 
 db = InfraBot.db
 

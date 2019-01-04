@@ -7,20 +7,23 @@ from flask import Flask
 from flask import request
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
-from app import Helper
+import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
 from hashids import Hashids
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-from app import DantesUpdater	# To access DantesUpdator
-from app import Updater
-from app import UserManager
-from app import InfraManager
-from app import Database
+import DantesUpdater	# To access DantesUpdator
+import Updater
+import UserManager
+import InfraManager
+import Database
+import AgentManager
+import StatusManager
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -33,10 +36,20 @@ agentSalt = os.environ['AGENT_SALT']
 clientDictionary = {}
 
 # Plugin objects
-dante = DantesUpdater.DantesUpdater()
+dante = DantesUpdater.Dantes_Updater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 update = Updater.Updater()
+status = StatusManager.StatusManager()
+
+commandDict = {
+        'dante':dante.api_entry,
+        'infra':infra.api_entry,
+        'user':user.api_entry,
+        'update':update.api_entry,
+        'agent':AgentManager.api_entry,
+        'status':status.api_entry
+        }
 
 # Encoder objects
 commandHashids = Hashids(salt=commandSalt)
@@ -48,47 +61,72 @@ def main():
     return "Welcome"
 
 # URI for /test command
-@app.route("/test",methods=['POST'])
+@app.route("/test",methods=['GET','POST'])
 def test():
-    content = request.json
+    content = request.form
 
-    if content['token'] == veritoken:
+    if content['token'] != veritoken:
         print("Unauthorized message detected")
-        return False
+        return 401
     print("RECIEVED TEST!")
-    sendMessage("Hello from /test", "#general")
+    sendMessage("Hello from /test", content['channel_id'], content['team_id'])
     return "Test Sent, did you see the prompt?"
 
 # URI for event subscription notifications
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
     content = request.json
-    team_id = content['team_id']
 
-    if content['token'] == veritoken:
+    if content['token'] != veritoken:
         print("Unauthorized message detected")
-        return False
+        return 401
     if content['type'] == "url_verification":
         print("Received verification message")
         return content['challenge']
 
     curEvent = content['event']
-
+    team_id = content['team_id']
+    
     if curEvent['type'] == 'message':
-        if curEvent['text'].startswith("!dante "):
-            dante.api_entry(curEvent['text'][len("!dante "):], curEvent['channel'], curEvent['user'], team_id)
-        elif curEvent['text'].startswith("!user "):
-            user.api_entry(curEvent['text'][len("!user "):], curEvent['channel'], curEvent['user'], team_id)
-        elif curEvent['text'].startswith("!infra "):
-            infra.api_entry(curEvent['text'][len("!infra "):], curEvent['channel'], curEvent['user'], team_id)
-        elif curEvent['text'].startswith("!update "):
-            update.api_entry(curEvent['text'][len("!update "):], curEvent['channel'], curEvent['user'],team_id)
-        #else:
-        #    sendEphemeral("Command not found", curEvent['channel'], curEvent['user'])
+        if 'text' in curEvent and curEvent['text'].startswith("!"):
+            command = curEvent['text'][1:]
+            key = command.split(' ', 1)[0]
+            if key in commandDict:
+                commandDict[key](command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
+            else:
+                print("Command Not Found")
+                sendEphemeral("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
+        else:
+            print("Message contains no text")
     else:
         print("Event not a message")
         print(content)
-    return "OK"
+    return "200"
+
+@app.route("/api/slash/set_admin_channel",methods=['POST'])
+def slash_set_admin_channel():
+    channel = request.form['channel_id']
+    user = request.form['user_id']
+    team_id = request.form['team_id']
+    if request.form['token'] != veritoken:
+        print("Unauthorized mesage detected")
+        return 401
+
+    print("Channel: ", channel)
+    if not checkPermission(user, "owner", team_id):
+        print(user + " attempted to set admin channel of workspace " + team_id)
+        sendEphemeral("Access Denied - Must be Owner to set admin channel", channel, user, team_id)
+        return ('', 200)
+
+    curWorkspace = Database.Workspaces.query.filter_by(team_id=team_id).first()
+    if curWorkspace is None:
+        print("Workspace " + team_id + " not found")
+        return 400
+
+    sendEphemeral("Set Admin Channel", channel, user, team_id)
+    curWorkspace.admin_channel = channel
+    Database.db.session.commit()
+    return ('', 200)
 
 # URI for an agent with ID <id> to retrieve a list of unfetched commandIDs
 @app.route("/api/agent/<id>/command",methods=['GET'])
@@ -99,31 +137,6 @@ def agent_id_command(id):
 @app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST'])
 def agent_id_command_id(aid, cid):
     return 404
-
-# Test route to print request information
-@app.route("/dante",methods=['POST'])
-def dante_parse():
-    content = request.json
-    if content['token'] == veritoken:
-        print("Unauthorized message detected")
-        return False
-    print(request.form)
-    print("Token:", request.form['token'])
-    print("Channel ID:", request.form['channel_id'])
-    print("User ID:", request.form['user_id'])
-    print("Text:", request.form['text'])
-    return "Command not yet interested"
-
-# Route to handle the dante_start command
-@app.route("/dante/start",methods=['POST'])
-def dante_start():
-    content = request.json
-    if content['token'] == veritoken:
-        print("Unauthorized message detected")
-        return False
-    dante.start()
-    print("Started Dantes")
-    return "Started Dantes Updater"
 
 @app.route("/install",methods=['GET'])
 def install():
@@ -194,6 +207,26 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id):
         user=sendUserID,
         text=message
         )
+''' Function to send a message to the designated admin channel
+    Input:
+        message: Message to send to the admins
+        team_id: Team whose admins should be contacted
+
+    Output:
+        boolean indicating if the admins have been contacted
+'''
+def notifyAdmins(message, team_id):
+    workspace = Database.Workspaces.query.filter_by(team_id=team_id).first()
+    if workspace is None:
+        print("Workspace " + team_id + " not found")
+        return False
+
+    if workspace.admin_channel is None:
+        print("No admin channel defined for workspace " + team_id)
+        return False
+
+    sendMessage(message, workspace.admin_channel, team_id)
+    return True
 
 ''' Function to check to see if a user possesses a specified permission level
     Input:
@@ -214,12 +247,11 @@ def checkPermission(user, requiredPerms, team_id):
     if curPermissions == Database.permissions.owner:
         print("User owner");
         return True
-    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner):
+    elif (curPermissions == Database.permissions.admin) and not (requiredPerms == Database.permissions.owner.name):
         return True
-    elif requiredPerms == Database.permissions.user:
+    elif requiredPerms == Database.permissions.user.name:
         return True
     else:
-        print(curPermissions)
         return False
 
 ''' Function to find the verify a user and determine their group membership
@@ -261,6 +293,18 @@ def addUser(toCheck, team):
     db.session.commit()
 
     return newPerms
+
+def getUserName(user_id, team):
+    client,_ = getClient(team)
+    if client is None:
+        print("Client not found: ", team)
+        return ""
+    response = client.api_call(
+        "users.info",
+        user=user_id,
+        include_locale="false"
+    )
+    return response['user']['name']
 
 def getClient(toCheck):
     if not toCheck in clientDictionary:

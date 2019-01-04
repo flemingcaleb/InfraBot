@@ -1,4 +1,4 @@
-from app import InfraBot
+import InfraBot
 
 class UserManager:
     def __init__(self):

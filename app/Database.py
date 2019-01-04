@@ -1,5 +1,5 @@
 import enum
-from app import InfraBot
+import InfraBot
 
 db = InfraBot.db
 
@@ -13,6 +13,13 @@ class update_type(enum.Enum):
     EVERY = 2
     FOR = 3
 
+class status_code(enum.Enum):
+    GREEN = 1
+    YELLOW = 2
+    ORANGE = 3
+    PINK = 4
+    RED = 5
+
 class Workspaces(db.Model):
     def __init__(self, b_tok, a_tok, v_tok, team):
         self.bot_token = b_tok
@@ -24,9 +31,19 @@ class Workspaces(db.Model):
     access_token = db.Column(db.String(100), nullable=False)
     verify_token = db.Column(db.String(100), nullable=False)
     team_id = db.Column(db.String(20), nullable=False)
+    admin_channel = db.Column(db.String(20), nullable=True)
     users = db.relationship('Users', backref='workspace', lazy=True)
     agents = db.relationship('Agents', backref='workspace', lazy=True)
     updates = db.relationship('Updates', backref='workspace', lazy=True)
+    #status = db.relationship('', backref='workspace', lazy=True)
+
+class Status(db.Model):
+    def __init__(self, workspace_id, initStatus):
+        self.workspace = workspace_id
+        self.status = initStatus
+
+    workspace = db.Column(db.Integer, db.ForeignKey('workspaces.id'), primary_key=True)
+    status = db.Column('status', db.Enum(status_code), nullable=False)
 
 class Users(db.Model):
     def __init__(self, permission, workspace, user):

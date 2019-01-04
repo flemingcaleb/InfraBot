@@ -2,42 +2,40 @@ import os 				# For env variables
 import threading			# Enables use as module in slackbot
 from time import sleep			# For sleep()
 from datetime import datetime		# To get system time
-from app import InfraBot
+import InfraBot
 
 Dante_Close_Hours = [1,9,17]
 
 Dante_Open_Hours = [2,10,18]
 
-
 ''' Class that defines a danteUpdater Thread. This thread is responsible for updating the
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
-class DantesUpdater:
+class Dantes_Updater:
     def __init__(self):
         self.__curThread = DantesUpdater_Thread()
+        self.__curThread.setDaemon(True)
+        self.__curThread.start()
 
     def api_entry(self, message, channel, user, team_id):
         if message == "start":
             if not InfraBot.checkPermission(user, "admin", team_id):
                 InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"
-            if self.__curThread.status():
-                self.__curThread.stop()
-                self.__curThread = DantesUpdater_Thread()
-                self.__curThread.start()
-                InfraBot.sendEphemeral("Restarted Dantes Updater", channel, user, team_id)
-            else:
-                self.__curThread.start()
-                InfraBot.sendEphemeral("Started Dantes Updater", channel, user, team_id)
+
+            self.__curThread.add_list(channel, team_id)
+            InfraBot.sendEphemeral("Started Dantes Updater", channel, user, team_id)
             return "Started Dantes Updater"
+
         elif message == "stop":
             if not InfraBot.checkPermission(user, "admin", team_id):
                 InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"
-            self.__curThread.stop()
-            self.__curThread = DantesUpdater_Thread()
+
+            self.__curThread.remove_list(channel, team_id)
             InfraBot.sendEphemeral("Stopped Dantes Manager", channel, user, team_id)
             return "Stopped Dantes Updater"
+
         elif message == "status":
             if self.__curThread.status():
                 InfraBot.sendMessage("Status: Running", channel, team_id)
@@ -59,6 +57,8 @@ class DantesUpdater_Thread(threading.Thread):
         self.__continue = False
         self.__send = False
         self.__longsleep = False
+        self.__listLock = threading.Lock()
+        self.__updateList = []
 
     ''' Function that starts the updater in its own thread, called by start() SHOULD NOT
         BE CALLED BY ITSELF
@@ -92,7 +92,7 @@ class DantesUpdater_Thread(threading.Thread):
                     self.__longSleep = True
 
             if self.__send:
-                InfraBot.sendMessage(self.__message, "#general", 'TA4P4C7FG')
+                self.send_updates(self.__message)
                 self.__send = False
 
             if self.__longSleep:
@@ -120,8 +120,37 @@ class DantesUpdater_Thread(threading.Thread):
             A boolean indicating if the module is running
     '''
     def status (self):
-        self.__lock.acquire()
-        status = self.__continue
-        self.__lock.release()
+        self.__listLock.acquire()
+        if self.__updateList == []:
+            status = True
+        else:
+            status = False
+        self.__listLock.release()
         return status
+
+    def add_list (self, newChannel, newTeam):
+        self.__listLock.acquire()
+        if not (newChannel, newTeam) in self.__updateList:
+            self.__updateList.append((newChannel,newTeam))
+            print("Dantes Updater: Added new channel to Update List")
+
+        else:
+            print("Dantes Updater: Channel already in Update List")
+
+        self.__listLock.release()
+
+    def remove_list (self, remChannel, remTeam):
+        self.__listLock.acquire()
+        if (remChannel, remTeam) in self.__updateList:
+            self.__updateList.remove((remChannel, remTeam))
+            print("Dantes Updater: Removed channel from Update List")
+
+        else:
+            print("Dantes Updater: Channel not in Update List")
+
+        self.__listLock.release()
+
+    def send_updates(self, message):
+        for (sendChannel, sendTeam) in self.__updateList:
+            InfraBot.sendMessage(message, sendChannel, sendTeam)
 

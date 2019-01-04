@@ -13,6 +13,13 @@ class update_type(enum.Enum):
     EVERY = 2
     FOR = 3
 
+class status_code(enum.Enum):
+    GREEN = 1
+    YELLOW = 2
+    ORANGE = 3
+    PINK = 4
+    RED = 5
+
 class Workspaces(db.Model):
     def __init__(self, b_tok, a_tok, v_tok, team):
         self.bot_token = b_tok
@@ -27,6 +34,14 @@ class Workspaces(db.Model):
     users = db.relationship('Users', backref='workspace', lazy=True)
     agents = db.relationship('Agents', backref='workspace', lazy=True)
     updates = db.relationship('Updates', backref='workspace', lazy=True)
+    #status = db.relationship('', backref='workspace', lazy=True)
+
+class Status(db.Model):
+    def __init__(self):
+        pass
+
+    workspace = db.Column(db.Integer, db.ForeignKey('workspaces.id'), primary_key=True)
+    status = db.Column('status', db.Enum(status_code), nullable=False)
 
 class Users(db.Model):
     def __init__(self, permission, workspace, user):

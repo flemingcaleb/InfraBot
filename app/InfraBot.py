@@ -61,7 +61,7 @@ def main():
     return "Welcome"
 
 # URI for /test command
-@app.route("/test",methods=['POST'])
+@app.route("/test",methods=['GET','POST'])
 def test():
     content = request.json
 
@@ -77,9 +77,9 @@ def test():
 def message_handle():
     content = request.json
 
-    if content['token'] == veritoken:
+    if content['token'] != veritoken:
         print("Unauthorized message detected")
-        return False
+        return 401
     if content['type'] == "url_verification":
         print("Received verification message")
         return content['challenge']
@@ -101,7 +101,31 @@ def message_handle():
     else:
         print("Event not a message")
         print(content)
-    return "OK"
+    return "200"
+
+@app.route("/api/slash/set_admin_channel",methods=['POST'])
+def slash_set_admin_channel():
+    channel = request.form['channel_id']
+    user = request.form['user_id']
+    team_id = request.form['team_id']
+    if request.form['token'] != veritoken:
+        print("Unauthorized mesage detected")
+        return 401
+
+    print("Channel: ", channel)
+    if not checkPermission(user, "owner", team_id):
+        sendEphemeral("Access Denied - Must be Owner to set admin channel", channel, user, team_id)
+        return ('', 200)
+
+    curWorkspace = Database.Workspaces.query.filter_by(team_id=team_id).first()
+    if curWorkspace is None:
+        print("Workspace " + team_id + " not found")
+        return 400
+
+    sendEphemeral("Set Admin Channel", channel, user, team_id)
+    curWorkspace.admin_channel = channel
+    Database.db.session.commit()
+    return ('', 200)
 
 # URI for an agent with ID <id> to retrieve a list of unfetched commandIDs
 @app.route("/api/agent/<id>/command",methods=['GET'])
@@ -112,31 +136,6 @@ def agent_id_command(id):
 @app.route("/api/agent/<aid>/command/<cid>",methods=['GET', 'POST'])
 def agent_id_command_id(aid, cid):
     return 404
-
-# Test route to print request information
-@app.route("/dante",methods=['POST'])
-def dante_parse():
-    content = request.json
-    if content['token'] == veritoken:
-        print("Unauthorized message detected")
-        return False
-    print(request.form)
-    print("Token:", request.form['token'])
-    print("Channel ID:", request.form['channel_id'])
-    print("User ID:", request.form['user_id'])
-    print("Text:", request.form['text'])
-    return "Command not yet interested"
-
-# Route to handle the dante_start command
-@app.route("/dante/start",methods=['POST'])
-def dante_start():
-    content = request.json
-    if content['token'] == veritoken:
-        print("Unauthorized message detected")
-        return False
-    dante.start()
-    print("Started Dantes")
-    return "Started Dantes Updater"
 
 @app.route("/install",methods=['GET'])
 def install():
@@ -207,6 +206,26 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id):
         user=sendUserID,
         text=message
         )
+''' Function to send a message to the designated admin channel
+    Input:
+        message: Message to send to the admins
+        team_id: Team whose admins should be contacted
+
+    Output:
+        boolean indicating if the admins have been contacted
+'''
+def notifyAdmins(message, team_id):
+    workspace = Database.Workspaces.query.filter_by(team_id=team_id).first()
+    if workspace is None:
+        print("Workspace " + team_id + " not found")
+        return False
+
+    if workspace.admin_channel is None:
+        print("No admin channel defined for workspace " + team_id)
+        return False
+
+    sendMessage(message, workspace.admin_channel, team_id)
+    return True
 
 ''' Function to check to see if a user possesses a specified permission level
     Input:
@@ -274,6 +293,18 @@ def addUser(toCheck, team):
     db.session.commit()
 
     return newPerms
+
+def getUserName(user_id, team):
+    client,_ = getClient(team)
+    if client is None:
+        print("Client not found: ", team)
+        return ""
+    response = client.api_call(
+        "users.info",
+        user=user_id,
+        include_locale="false"
+    )
+    return response['user']['name']
 
 def getClient(toCheck):
     if not toCheck in clientDictionary:

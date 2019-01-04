@@ -31,6 +31,7 @@ class Workspaces(db.Model):
     access_token = db.Column(db.String(100), nullable=False)
     verify_token = db.Column(db.String(100), nullable=False)
     team_id = db.Column(db.String(20), nullable=False)
+    admin_channel = db.Column(db.String(20), nullable=True)
     users = db.relationship('Users', backref='workspace', lazy=True)
     agents = db.relationship('Agents', backref='workspace', lazy=True)
     updates = db.relationship('Updates', backref='workspace', lazy=True)

@@ -35,6 +35,7 @@ class StatusManager:
             remainder = message[len("set "):].upper()
             if remainder.startswith("YELLOW") and curStatus.status == statusType.GREEN:
                 curStatus.status = statusType.YELLOW
+                InfraBot.notifyAdmins(InfraBot.getUserName(user, team_id) + " set status to YELLOW", team_id)
             else:
                 if not InfraBot.checkPermission(user, "admin", team_id):
                     InfraBot.send_error("Access Denied", channel, user, team_id)

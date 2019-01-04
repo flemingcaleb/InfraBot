@@ -14,6 +14,7 @@ from hashids import Hashids
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 import DantesUpdater	# To access DantesUpdator
@@ -72,7 +73,6 @@ def test():
 @app.route("/api/messages",methods=['GET','POST'])
 def message_handle():
     content = request.json
-    team_id = content['team_id']
 
     if content['token'] == veritoken:
         print("Unauthorized message detected")
@@ -82,7 +82,8 @@ def message_handle():
         return content['challenge']
 
     curEvent = content['event']
-
+    team_id = content['team_id']
+    
     if curEvent['type'] == 'message':
         if curEvent['text'].startswith("!"):
             command = curEvent['text'][1:]

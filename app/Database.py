@@ -1,5 +1,5 @@
 import enum
-from app import InfraBot
+import InfraBot
 
 db = InfraBot.db
 

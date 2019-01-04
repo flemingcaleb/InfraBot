@@ -7,7 +7,7 @@ from flask import Flask
 from flask import request
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
-from app import Helper
+import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
 from hashids import Hashids
@@ -16,12 +16,12 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
 db = SQLAlchemy(app)
 
-from app import DantesUpdater	# To access DantesUpdator
-from app import Updater
-from app import UserManager
-from app import InfraManager
-from app import Database
-from app import AgentManager
+import DantesUpdater	# To access DantesUpdator
+import Updater
+import UserManager
+import InfraManager
+import Database
+import AgentManager
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -34,7 +34,7 @@ agentSalt = os.environ['AGENT_SALT']
 clientDictionary = {}
 
 # Plugin objects
-dante = DantesUpdater.DantesUpdater()
+dante = DantesUpdater.Dantes_Updater()
 user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 update = Updater.Updater()

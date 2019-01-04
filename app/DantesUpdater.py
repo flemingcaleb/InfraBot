@@ -2,7 +2,7 @@ import os 				# For env variables
 import threading			# Enables use as module in slackbot
 from time import sleep			# For sleep()
 from datetime import datetime		# To get system time
-from app import InfraBot
+import InfraBot
 
 Dante_Close_Hours = [1,9,17]
 
@@ -11,7 +11,7 @@ Dante_Open_Hours = [2,10,18]
 ''' Class that defines a danteUpdater Thread. This thread is responsible for updating the
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
-class DantesUpdater:
+class Dantes_Updater:
     def __init__(self):
         self.__curThread = DantesUpdater_Thread()
         self.__curThread.start()

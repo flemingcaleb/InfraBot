@@ -95,7 +95,7 @@ def message_handle():
                 commandDict[key](command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
             else:
                 print("Command Not Found")
-                sendEphemeral("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
+                sendHelp("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
         else:
             print("Message contains no text")
     else:
@@ -325,6 +325,19 @@ def addClient(bot, access, verify, team):
     newClient = Database.Workspaces(bot, access, veritoken, team)
     db.session.add(newClient)
     db.session.commit()
+
+def sendHelp(message, sendChannel, sendUserID, sendTeamID):
+    messageString = ""
+    if not message is None:
+        messageString += message +"\n\n"
+    messageString += "InfraBot Help:\n"
+    messageString += "\t!help - Prints this help prompt\n"
+    messageString += "\t!<module name> help - Prints the help for a given module\n"
+    messageString += "\nModule List:"
+    for module in commandDict:
+        print(module):
+
+    InfraBot.sendEphemeral(messageString, sendChannel, sendUserID, sendTeamID)
 
 if __name__ == '__main__':
     main()

@@ -4,9 +4,10 @@ import os				# To access tokens
 from slackclient import SlackClient
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
-from flask import request
+from flask import request, make_response, Response
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
+import json
 import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
@@ -69,7 +70,27 @@ def test():
         print("Unauthorized message detected")
         return 401
     print("RECIEVED TEST!")
-    sendMessage("Hello from /test", content['channel_id'], content['team_id'])
+
+    message_attachments = [
+        {
+            "fallback": "Upgrade your Slack client to use messages like these.",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "callback_id": "menu_options_2319",
+            "actions": [
+                {
+                    "name": "games_list",
+                    "text": "Pick a game...",
+                    "type": "select",
+                    "data_source": "external"
+                }
+            ]
+        }
+    ]
+
+
+
+    sendMessage("Hello from /test", content['channel_id'], content['team_id'], attachments_send=message_attachments)
     return "Test Sent, did you see the prompt?"
 
 # URI for event subscription notifications
@@ -104,6 +125,55 @@ def message_handle():
         print("Event not a message")
         print(content)
     return "200"
+
+@app.route("/api/messages/options",methods=['POST'])
+def message_option_handle():
+    # Parse the request payload
+    form_json = json.loads(request.form["payload"])
+
+    menu_options = {
+        "options": [
+            {
+                "text": "Chess",
+                "value": "chess"
+            },
+            {
+                "text": "Global Thermonuclear War",
+                "value": "war"
+            }
+        ]
+    }
+
+    return (Response(json.dumps(menu_options), mimetype='application/json'),200)
+
+@app.route("/api/messages/actions",methods=['POST'])
+def message_actions_handle():
+    # Parse the request payload
+    form_json = json.loads(request.form["payload"])
+
+    # Check to see what the user's selection was and update the message
+    selection = form_json["actions"][0]["selected_options"][0]["value"]
+
+    if selection == "war":
+        message_text = "The only winning move is not to play.\nHow about a nice game of chess?"
+    else:
+        message_text = ":horse:"
+
+    print("\n\n\n\n\n\n\n------------------------------")
+    print(form_json['team']['id'])
+    client,_ = getClient(form_json['team']['id'])
+    if client is None:
+        print("Team not found: ", team_id)
+
+    response = client.api_call(
+      "chat.update",
+      channel=form_json["channel"]["id"],
+      ts=form_json["message_ts"],
+      text=message_text,
+      attachments=[]
+    )
+
+    return make_response("", 200)
 
 @app.route("/api/slash/set_admin_channel",methods=['POST'])
 def slash_set_admin_channel():
@@ -177,16 +247,24 @@ def install_confirm():
     Output:
         N/A
 '''
-def sendMessage (message, sendChannel, team_id):
+def sendMessage (message, sendChannel, team_id, attachments_send=None):
     client,_ = getClient(team_id)
     if client is None:
         print("Team not found: ", team_id)
 
-    client.api_call(
-        "chat.postMessage",
-        channel=sendChannel,
-        text=message
-        )
+    if attachments_send is None:
+        client.api_call(
+            "chat.postMessage",
+            channel=sendChannel,
+            text=message
+            )
+    else:
+        client.api_call(
+            "chat.postMessage",
+            channel=sendChannel,
+            text=message,
+            attachments=attachments_send
+            )
 
 ''' Function to send an ephemeral message
     Input:

@@ -91,7 +91,9 @@ def message_handle():
         if 'text' in curEvent and curEvent['text'].startswith("!"):
             command = curEvent['text'][1:]
             key = command.split(' ', 1)[0]
-            if key in commandDict:
+            if key == "help":
+                sendHelp(None, curEvent['channel'], curEvent['user'], team_id)
+            elif key in commandDict:
                 commandDict[key](command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
             else:
                 print("Command Not Found")
@@ -333,11 +335,11 @@ def sendHelp(message, sendChannel, sendUserID, sendTeamID):
     messageString += "InfraBot Help:\n"
     messageString += "\t!help - Prints this help prompt\n"
     messageString += "\t!<module name> help - Prints the help for a given module\n"
-    messageString += "\nModule List:"
+    messageString += "\nModule List:\n"
     for module in commandDict:
-        print(module):
+        messageString += "\t\"!" + module + "\"\n"
 
-    InfraBot.sendEphemeral(messageString, sendChannel, sendUserID, sendTeamID)
+    sendEphemeral(messageString, sendChannel, sendUserID, sendTeamID)
 
 if __name__ == '__main__':
     main()

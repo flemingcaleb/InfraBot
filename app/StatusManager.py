@@ -4,11 +4,10 @@ from Database import status_code as statusType
 import Database
 
 class StatusManager(InfraModule):
-    workspaces = {}
-    options = None
     
     def __init__ (self):
-        super.__init__("status", options)
+        super().__init__("status", None)
+        self.workspaces = {}
         queries = Database.Status.query.all()
 
         for workspace in queries:

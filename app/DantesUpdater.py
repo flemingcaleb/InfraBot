@@ -13,9 +13,8 @@ Dante_Open_Hours = [2,10,18]
     general channel 5 minutes before Dantes Forest Closes, when Dante's Forest closes, and
     when Dantes Forest opens again '''
 class Dantes_Updater(InfraModule):
-    options = None
     def __init__(self):
-        super.__init__("dante", options)
+        super().__init__("dante", None)
         self.__curThread = DantesUpdater_Thread()
         self.__curThread.setDaemon(True)
         self.__curThread.start()

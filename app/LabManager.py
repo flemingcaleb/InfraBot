@@ -48,8 +48,10 @@ class LabManager(InfraModule):
                 ]
             }
         ]
-
-        InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
+        if InfraBot.checkDM(channel, team_id):
+            InfraBot.sendMessage("", channel, team_id, attachments_send=message_attachments)
+        else:
+            InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
         return "Initial Lab"
 
     def action_entry(self, form_data):
@@ -64,5 +66,7 @@ class LabManager(InfraModule):
             else:
                 message_text = "Other"
                 attachments = None
-        
-        InfraBot.sendEphemeral(message_text, channel, user, team, attachments_send=attachments) 
+        if InfraBot.checkDM(channel, team):
+            InfraBot.sendMessage(message_text, channel, team, attachments_send=attachments)
+        else:
+            InfraBot.sendEphemeral(message_text, channel, user, team, attachments_send=attachments) 

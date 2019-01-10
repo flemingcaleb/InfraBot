@@ -5,10 +5,12 @@ import Database
 
 class StatusManager(InfraModule):
     workspaces = {}
-    def __init__ (self, options=None):
-        if not options is None:
-            super.__init__(options)
-        queries = Database.Status.query.all();
+    options = None
+    
+    def __init__ (self):
+        super.__init__("status", options)
+        queries = Database.Status.query.all()
+
         for workspace in queries:
             dbWorkspace = Database.Workspaces.query.filter_by(id = workspace.workspace).first()
             if dbWorkspace is None:

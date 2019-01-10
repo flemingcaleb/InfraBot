@@ -1,6 +1,8 @@
 class InfraModule:
     options = None
-    def __init__(self, options):
+    name = "default"
+    def __init__(self, name, options):
+        self.name = name
         self.options = options
 
     def api_entry(self, message, channel, user, team_id):

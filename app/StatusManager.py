@@ -41,7 +41,7 @@ class StatusManager(InfraModule):
                 InfraBot.notifyAdmins(InfraBot.getUserName(user, team_id) + " set status to YELLOW", team_id)
             else:
                 if not InfraBot.checkPermission(user, "admin", team_id):
-                    InfraBot.send_error("Access Denied", channel, user, team_id)
+                    InfraBot.sendHelp("Access Denied", channel, user, team_id)
                     return "Access Denied"
                 
                 if remainder == "GREEN":
@@ -53,7 +53,7 @@ class StatusManager(InfraModule):
                 elif remainder == "RED":
                     curStatus.status = statusType.RED
                 else:
-                    InfraBot.send_error("Invalid status.", channel, user, team_id)
+                    InfraBot.sendHelp("Invalid status.", channel, user, team_id)
                     return "Invalid status selected"
 
             InfraBot.sendEphemeral("Status: " + curStatus.status.name, channel, user, team_id)

@@ -46,6 +46,7 @@ Provided helper functions:
  notifyAdmins(message, team_id)                              | Boolean | Sends a message to the designated admin channel for the given workspace, returns a boolean indicating if the admins have been notified (false if the admin channel not set)
  checkPermission(user, requiredPerms, team_id)               | Boolean | Checks to see if the given user possesses the specified permissions. Returns true/false
  getUserName(user_id, team_id)                               | String  | Returns the username of the given user
+ checkDM(channel, team_id)				     | Boolean | Checks to see if the given channel is a DM with InfraBot
 -----------------------------------------------------------------------
 ## Database Schema
 ### Table: users

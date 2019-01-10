@@ -310,6 +310,33 @@ def checkPermission(user, requiredPerms, team_id):
     else:
         return False
 
+def checkDM(channelCheck, team):
+    client,_ = getClient(team)
+    if client is None:
+        print("Client not found: ", team)
+        return False
+
+    response = client.api_call(
+        "channels.info",
+        channel=channelCheck
+        )
+
+    if response['ok']:
+        #Channel is a public channel
+        return False
+
+    response = client.api_call(
+        "groups.info",
+        channel=channelCheck
+        )
+
+    if response['ok']:
+        #Channel is a pivate channel/group message
+        return False
+
+    #Channel is a DM
+    return True
+
 ''' Function to find the verify a user and determine their group membership
     Input:
         toCheck: User object to verify and classify

@@ -133,8 +133,9 @@ def message_handle():
 def message_option_handle():
     # Parse the request payload
     form_json = json.loads(request.form["payload"])
+    print("Form Data:\n", form_json)
 
-    menu_options = commandDict[form_json['name']].options
+    menu_options = commandDict[form_json['callback_id']].option_entry(form_json)
 
     return (Response(json.dumps(menu_options), mimetype='application/json'),200)
 
@@ -143,8 +144,9 @@ def message_actions_handle():
     # Parse the request payload
     form_json = json.loads(request.form["payload"])
 
+    print("Action Form:\n", form_json)
     # Check to see what the user's selection was and update the message
-    commandDict[form_json['actions'][0]['name']].action_entry(form_json)
+    commandDict[form_json['callback_id']].action_entry(form_json)
 
     return make_response("", 200)
 
@@ -247,7 +249,7 @@ def sendMessage (message, sendChannel, team_id, attachments_send=None):
     Output:
         N/A
 '''
-def sendEphemeral (message, sendChannel, sendUserID, team_id):
+def sendEphemeral (message, sendChannel, sendUserID, team_id, attachments_send=None):
     client,_ = getClient(team_id)
 
     if client is None:
@@ -258,7 +260,8 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id):
         "chat.postEphemeral",
         channel=sendChannel,
         user=sendUserID,
-        text=message
+        text=message,
+        attachments=attachments_send
         )
 ''' Function to send a message to the designated admin channel
     Input:

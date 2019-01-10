@@ -1,6 +1,4 @@
 class InfraModule:
-    options = None
-    name = "default"
     def __init__(self, name, options):
         self.name = name
         self.options = options
@@ -11,3 +9,6 @@ class InfraModule:
 
     def action_entry(self, form_data):
         return "Action not implemented"
+
+    def option_entry(self, form_data):
+        return self.options

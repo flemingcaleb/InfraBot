@@ -1,10 +1,13 @@
 import InfraBot
+from InfraModule import InfraModule
 from Database import status_code as statusType
 import Database
 
-class StatusManager:
+class StatusManager(InfraModule):
     workspaces = {}
-    def __init__ (self):
+    def __init__ (self, options=None):
+        if not options is None:
+            super.__init__(options)
         queries = Database.Status.query.all();
         for workspace in queries:
             dbWorkspace = Database.Workspaces.query.filter_by(id = workspace.workspace).first()

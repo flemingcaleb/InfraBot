@@ -44,12 +44,12 @@ update = Updater.Updater()
 status = StatusManager.StatusManager()
 
 commandDict = {
-        'dante':dante.api_entry,
-        'infra':infra.api_entry,
-        'user':user.api_entry,
-        'update':update.api_entry,
-        'agent':AgentManager.api_entry,
-        'status':status.api_entry
+        'dante':dante,
+        'infra':infra,
+        'user':user,
+        'update':update,
+        'agent':AgentManager,
+        'status':status
         }
 
 # Encoder objects
@@ -115,7 +115,7 @@ def message_handle():
             if key == "help":
                 sendHelp(None, curEvent['channel'], curEvent['user'], team_id)
             elif key in commandDict:
-                commandDict[key](command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
+                commandDict[key].api_entry(command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
             else:
                 print("Command Not Found")
                 sendHelp("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)

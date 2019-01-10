@@ -1,6 +1,7 @@
 import InfraBot
+from InfraModule import InfraModule
 
-class UserManager:
+class UserManager(InfraModule):
     def __init__(self):
         self.num = 0
 

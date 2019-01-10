@@ -25,6 +25,7 @@ import InfraManager
 import Database
 import AgentManager
 import StatusManager
+import LabManager
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -42,6 +43,7 @@ user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 update = Updater.Updater()
 status = StatusManager.StatusManager()
+lab = LabManager.LabManager()
 
 commandDict = {
         'dante':dante,
@@ -49,7 +51,8 @@ commandDict = {
         'user':user,
         'update':update,
         'agent':AgentManager,
-        'status':status
+        'status':status,
+        'lab':lab
         }
 
 # Encoder objects
@@ -131,6 +134,8 @@ def message_option_handle():
     # Parse the request payload
     form_json = json.loads(request.form["payload"])
 
+    print("Options form:\n", form_json)
+
     menu_options = {
         "options": [
             {
@@ -152,26 +157,7 @@ def message_actions_handle():
     form_json = json.loads(request.form["payload"])
 
     # Check to see what the user's selection was and update the message
-    selection = form_json["actions"][0]["selected_options"][0]["value"]
-
-    if selection == "war":
-        message_text = "The only winning move is not to play.\nHow about a nice game of chess?"
-    else:
-        message_text = ":horse:"
-
-    print("\n\n\n\n\n\n\n------------------------------")
-    print(form_json['team']['id'])
-    client,_ = getClient(form_json['team']['id'])
-    if client is None:
-        print("Team not found: ", team_id)
-
-    response = client.api_call(
-      "chat.update",
-      channel=form_json["channel"]["id"],
-      ts=form_json["message_ts"],
-      text=message_text,
-      attachments=[]
-    )
+    print("Action form data:\n", form_json)
 
     return make_response("", 200)
 

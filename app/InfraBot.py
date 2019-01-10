@@ -134,20 +134,7 @@ def message_option_handle():
     # Parse the request payload
     form_json = json.loads(request.form["payload"])
 
-    print("Options form:\n", form_json)
-
-    menu_options = {
-        "options": [
-            {
-                "text": "Chess",
-                "value": "chess"
-            },
-            {
-                "text": "Global Thermonuclear War",
-                "value": "war"
-            }
-        ]
-    }
+    menu_options = commandDict[form_json['name']].options
 
     return (Response(json.dumps(menu_options), mimetype='application/json'),200)
 
@@ -157,7 +144,7 @@ def message_actions_handle():
     form_json = json.loads(request.form["payload"])
 
     # Check to see what the user's selection was and update the message
-    print("Action form data:\n", form_json)
+    commandDict[form_json['actions'][0]['name']].action_entry(form_json)
 
     return make_response("", 200)
 

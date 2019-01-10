@@ -35,11 +35,11 @@ class LabManager(InfraModule):
             }
         ]
 
-        sendMessage("Hello from /test", content['channel_id'], content['team_id'], attachments_send=message_attachments)
+        InfraBot.sendMessage("Hello from /test", channel, team_id, attachments_send=message_attachments)
         return "Initial Lab"
 
     def action_entry(self, form_data):
-        selection = form_json["actions"][0]["selected_options"][0]["value"]
+        selection = form_data["actions"][0]["selected_options"][0]["value"]
 
         if selection == "war":
             message_text = "The only winning move is not to play.\nHow about a nice game of chess?"
@@ -47,15 +47,15 @@ class LabManager(InfraModule):
             message_text = ":horse:"
 
         print("\n\n\n\n\n\n\n------------------------------")
-        print(form_json['team']['id'])
-        client,_ = getClient(form_json['team']['id'])
+        print(form_data['team']['id'])
+        client,_ = InfraBot.getClient(form_data['team']['id'])
         if client is None:
             print("Team not found: ", team_id)
 
         response = client.api_call(
         "chat.update",
-        channel=form_json["channel"]["id"],
-        ts=form_json["message_ts"],
+        channel=form_data["channel"]["id"],
+        ts=form_data["message_ts"],
         text=message_text,
         attachments=[]
         )

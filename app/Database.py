@@ -98,13 +98,13 @@ class Labs(db.Model):
     difficulty = db.Column(db.Integer, nullable=True)
     possible_score = db.Column(db.Integer, nullable=True)
 
-class Lab_Scores(db.Model):
+class LabScores(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), primary_key=True)
     score = db.Column(db.Integer, nullable=False)
 
-class Hint_Categories(db.Model):
+class HintCategories(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=False)
@@ -115,6 +115,6 @@ class Hints(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=False)
-    category = db.Column(db.Integer, db.ForeignKey('hint_categories.id'), nullable=False)
+    category = db.Column(db.Integer, db.ForeignKey('hintcategories.id'), nullable=False)
     seq_num = db.Column(db.Integer, nullable=False)
     hint = db.Column(db.Text, nullable=False)

@@ -101,7 +101,7 @@ class LabManager(InfraModule):
             resultString = "Error: No Labs Found"
         else:
             for result in results:
-                resultString = result.name + " - " + result.url + "\n"
+                resultString += result.name + " - " + result.url + "\n"
 
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return resultString,None

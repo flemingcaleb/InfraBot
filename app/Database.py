@@ -94,7 +94,7 @@ class Labs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
-    url = db.Column(db.String(50), nullable=False)
+    url = db.Column(db.String(150), nullable=False)
     difficulty = db.Column(db.Integer, nullable=True)
     possible_score = db.Column(db.Integer, nullable=True)
 

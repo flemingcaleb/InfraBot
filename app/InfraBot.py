@@ -263,6 +263,20 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id, attachments_send=N
         text=message,
         attachments=attachments_send
         )
+
+def deleteMessage(ts_delete, chan, team):
+    client,_ = getClient(team)
+
+    if client is None:
+        print("Team not found: ", team)
+        return
+
+    client.api_call(
+        "chat.delete",
+        channel=chan,
+        ts=ts_delete
+    )
+
 ''' Function to send a message to the designated admin channel
     Input:
         message: Message to send to the admins

@@ -1,8 +1,10 @@
 import InfraBot
 from InfraModule import InfraModule
+import Database
 
 class LabManager(InfraModule):
     def __init__ (self):
+        self.workspaces = {}
         menu_options = {
             "options": [
                 {
@@ -16,6 +18,15 @@ class LabManager(InfraModule):
             ]
         }
         super().__init__("lab", menu_options)
+
+        queries = Database.Status.query.all()
+
+        for workspace in queries:
+            dbWorkspace = Database.Workspaces.query.filter_by(id = workspace.workspace).first()
+            if dbWorkspace is None:
+                print("Workspace does not exist in database")
+            else:
+                self.workspaces[dbWorkspace.team_id] = workspace.workspace
 
     def api_entry(self, message, channel, user, team_id):
         message_attachments = [
@@ -59,10 +70,21 @@ class LabManager(InfraModule):
         user = form_data['user']['id']
         team = form_data['team']['id']
 
+        if not team in self.workspaces:
+            if not self.add_workspace_id(team_id):
+                print("Workspace does not exist")
+                return "Workspace " + team_id + " does not exist"
+
         for action in form_data["actions"]:
             if action['name'] == "initial_menu":
-                message_text = "Initial Menu"
-                attachments = None
+                print("Form data", form_data)
+                print("Action:\n", action)
+                if action['selected_options'][0]['value'] == "list":
+                    message_text,attachments = self.labs_list(user, channel, team, form_data)
+                elif action['selected_options'][0]['value'] == "hint":
+                    message_text,attachments = self.labs_hints(user, channel, team, form_data)
+                elif action['selected_options'][0]['value'] == "submit":
+                    message_text,attachments = self.labs_submit(user, channel, team, form_data)
             else:
                 message_text = "Other"
                 attachments = None
@@ -70,3 +92,24 @@ class LabManager(InfraModule):
             InfraBot.sendMessage(message_text, channel, team, attachments_send=attachments)
         else:
             InfraBot.sendEphemeral(message_text, channel, user, team, attachments_send=attachments) 
+
+    def labs_list(self, user, channel, team, form):
+        resultString = ""
+
+        results = Database.Labs.query.filter_by(workspace_id = self.workspaces[team]).all()
+        if results is None:
+            resultString = "Error: No Labs Found"
+        else:
+            for result in results:
+                resultString = result.name + " - " + result.url + "\n"
+
+        InfraBot.deleteMessage(form['message_ts'], channel, team)
+        return resultString,None
+
+    def labs_hints(self, user, channel, team, form):
+        InfraBot.deleteMessage(form['message_ts'], channel, team)
+        return "Hints not yet implemented",None
+
+    def labs_submit(self, user, channel, team, form):
+        InfraBot.deleteMessage(form['message_ts'], channel, team)
+        return "Lab submissions not yet implemented",None

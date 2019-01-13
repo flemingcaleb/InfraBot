@@ -1,5 +1,6 @@
 import enum
 import InfraBot
+from datetime import datetime
 
 db = InfraBot.db
 
@@ -32,6 +33,7 @@ class Workspaces(db.Model):
     verify_token = db.Column(db.String(100), nullable=False)
     team_id = db.Column(db.String(20), nullable=False)
     admin_channel = db.Column(db.String(20), nullable=True)
+    hint_timeout = db.Column(db.Integer, nullable=True)
     users = db.relationship('Users', backref='workspace', lazy=True)
     agents = db.relationship('Agents', backref='workspace', lazy=True)
     updates = db.relationship('Updates', backref='workspace', lazy=True)
@@ -54,6 +56,7 @@ class Users(db.Model):
     permission_level = db.Column('permission_level', db.Enum(permissions), nullable=False)
     workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
     user_id = db.Column(db.String(20), nullable=False)
+    last_hint = db.Column(db.DateTime(), nullable=True)
     commands = db.relationship('Commands', backref='user', lazy=True)
     updates = db.relationship('Updates', backref='user', lazy=True)
 

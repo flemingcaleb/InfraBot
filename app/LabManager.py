@@ -1,6 +1,7 @@
 import InfraBot
 from InfraModule import InfraModule
 import Database
+from datetime import datetime, timedelta
 
 class LabManager(InfraModule):
     def __init__ (self):
@@ -29,41 +30,43 @@ class LabManager(InfraModule):
                 self.workspaces[dbWorkspace.team_id] = workspace.workspace
 
     def api_entry(self, message, channel, user, team_id):
-        message_attachments = [
-            {
-                "text": "Lab Menu",
-                "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
-                "color": "#3AA3E3",
-                "attachment_type": "default",
-                "callback_id": "lab",
-                "actions": [
-                    {
-                        "name": "initial_menu",
-                        "text": "Select an option...",
-                        "type": "select",
-                        "options": [
-                            {
-                                "text": "List",
-                                "value": "list"
-                            },
-                            {
-                                "text": "Hint",
-                                "value": "hint"
-                            },
-                            {
-                                "text": "Submit",
-                                "value": "submit"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-        if InfraBot.checkDM(channel, team_id):
-            InfraBot.sendMessage("", channel, team_id, attachments_send=message_attachments)
-        else:
-            InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
-        return "Initial Lab"
+        if message is "":
+            # Start menu to select hint to give
+            message_attachments = [
+                {
+                    "text": "Lab Menu",
+                    "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
+                    "color": "#3AA3E3",
+                    "attachment_type": "default",
+                    "callback_id": "lab",
+                    "actions": [
+                        {
+                            "name": "initial_menu",
+                            "text": "Select an option...",
+                            "type": "select",
+                            "options": [
+                                {
+                                    "text": "List",
+                                    "value": "list"
+                                },
+                                {
+                                    "text": "Hint",
+                                    "value": "hint"
+                                },
+                                {
+                                    "text": "Submit",
+                                    "value": "submit"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+            if InfraBot.checkDM(channel, team_id):
+                InfraBot.sendMessage("", channel, team_id, attachments_send=message_attachments)
+            else:
+                InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
+            return "Initial Lab"
 
     def action_entry(self, form_data):
         channel = form_data['channel']['id']
@@ -73,7 +76,7 @@ class LabManager(InfraModule):
         if not team in self.workspaces:
             if not self.add_workspace_id(team_id):
                 print("Workspace does not exist")
-                return "Workspace " + team_id + " does not exist"
+                return "Workspace " + team + " does not exist"
 
         for action in form_data["actions"]:
             splitArr = action['name'].split(":")
@@ -86,6 +89,29 @@ class LabManager(InfraModule):
                 if action['selected_options'][0]['value'] == "list":
                     message_text,attachments = self.labs_list(user, channel, team, form_data)
                 elif action['selected_options'][0]['value'] == "hint":
+                    # Check if the user is allowed to get a hint
+                    curUser = Database.Users.query.filter_by(user_id=user).first()
+                    curWorkspace = Database.Workspaces.query.filter_by(team_id = team).first()
+                    curTime = datetime.now()
+                    lastHint = curUser.last_hint
+                    if not lastHint is None:
+                        if curWorkspace is None:
+                            print("Workspace is None")
+                            InfraBot.deleteMessage(form_data['message_ts'], channel, team)
+                            return""
+                        print("Workspace: ", curWorkspace)
+                        timeFrame = timedelta(seconds=curWorkspace.hint_timeout)
+                        if curTime < (lastHint + timeFrame):
+                            response = "You must wait "
+                            response += str((lastHint+timeFrame)-curTime)
+                            response += " until your next hint"
+                            InfraBot.deleteMessage(form_data['message_ts'], channel, team)
+                            InfraBot.sendEphemeral(response, channel, user, team)
+                            return ""
+                    else:
+                        curUser.last_hint = datetime.now()
+                        Database.db.session.commit()
+
                     message_text,attachments = self.labs_hints_list(user, channel, team, form_data)
                 elif action['selected_options'][0]['value'] == "submit":
                     message_text,attachments = self.labs_submit(user, channel, team, form_data)
@@ -98,6 +124,7 @@ class LabManager(InfraModule):
             else:
                 message_text = "Other"
                 attachments = None
+
         if InfraBot.checkDM(channel, team):
             InfraBot.sendMessage(message_text, channel, team, attachments_send=attachments)
         else:

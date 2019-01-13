@@ -1,6 +1,7 @@
 import InfraBot
 from InfraModule import InfraModule
 import Database
+from datetime import datetime, timedelta
 
 class LabManager(InfraModule):
     def __init__ (self):
@@ -29,41 +30,56 @@ class LabManager(InfraModule):
                 self.workspaces[dbWorkspace.team_id] = workspace.workspace
 
     def api_entry(self, message, channel, user, team_id):
-        message_attachments = [
-            {
-                "text": "Lab Menu",
-                "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
-                "color": "#3AA3E3",
-                "attachment_type": "default",
-                "callback_id": "lab",
-                "actions": [
-                    {
-                        "name": "initial_menu",
-                        "text": "Select an option...",
-                        "type": "select",
-                        "options": [
-                            {
-                                "text": "List",
-                                "value": "list"
-                            },
-                            {
-                                "text": "Hint",
-                                "value": "hint"
-                            },
-                            {
-                                "text": "Submit",
-                                "value": "submit"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-        if InfraBot.checkDM(channel, team_id):
-            InfraBot.sendMessage("", channel, team_id, attachments_send=message_attachments)
-        else:
-            InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
-        return "Initial Lab"
+        if message is "":
+            # Check if the user is allowed to get a hint
+            lastHint = Database.Users.query.filter_by(user_id=user).first()
+            curTime = datetime.now()
+            if not lastHint is None:
+                workspace = InfraBot.getClient(team_id)
+                timeFrame = workspace.hint_timeout
+                if curTime < (lastHint + timeFrame):
+                    response = "You must wait until "
+                    response += str(lastHint+timeFrame)
+                    response += " for your next hint"
+                    InfraBot.sendEphemeral(response, channel, user, team_id)
+                    return "Permission Denied"
+ 
+            # Start menu to select hint to give
+            message_attachments = [
+                {
+                    "text": "Lab Menu",
+                    "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
+                    "color": "#3AA3E3",
+                    "attachment_type": "default",
+                    "callback_id": "lab",
+                    "actions": [
+                        {
+                            "name": "initial_menu",
+                            "text": "Select an option...",
+                            "type": "select",
+                            "options": [
+                                {
+                                    "text": "List",
+                                    "value": "list"
+                                },
+                                {
+                                    "text": "Hint",
+                                    "value": "hint"
+                                },
+                                {
+                                    "text": "Submit",
+                                    "value": "submit"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+            if InfraBot.checkDM(channel, team_id):
+                InfraBot.sendMessage("", channel, team_id, attachments_send=message_attachments)
+            else:
+                InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
+            return "Initial Lab"
 
     def action_entry(self, form_data):
         channel = form_data['channel']['id']
@@ -98,6 +114,7 @@ class LabManager(InfraModule):
             else:
                 message_text = "Other"
                 attachments = None
+
         if InfraBot.checkDM(channel, team):
             InfraBot.sendMessage(message_text, channel, team, attachments_send=attachments)
         else:

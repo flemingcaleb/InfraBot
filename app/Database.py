@@ -115,6 +115,6 @@ class Hints(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=False)
-    category = db.Column(db.Integer, db.ForeignKey('hintcategories.id'), nullable=False)
+    category = db.Column(db.Integer, db.ForeignKey('hint_categories.id'), nullable=False)
     seq_num = db.Column(db.Integer, nullable=False)
     hint = db.Column(db.Text, nullable=False)

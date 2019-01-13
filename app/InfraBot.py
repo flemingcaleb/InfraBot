@@ -262,7 +262,23 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id, attachments_send=N
         user=sendUserID,
         text=message,
         attachments=attachments_send
-        )
+    )
+
+def modifyMessage(orig_ts, message, sendChannel, sendUser, team, attachments_send=None):
+    client,_ = getClient(team)
+
+    if client is None:
+        print("Team not found: ", team)
+        return
+
+    client.api_call(
+        "chat.update",
+        channel=sendChannel,
+        user=sendUser,
+        ts=orig_ts,
+        text=message,
+        attachments=attachments_send
+    )
 
 def deleteMessage(ts_delete, chan, team):
     client,_ = getClient(team)

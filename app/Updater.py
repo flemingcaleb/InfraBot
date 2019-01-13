@@ -1,11 +1,15 @@
 import threading
 from time import sleep
 import InfraBot
+from InfraModule import InfraModule
 import Database
 
 db = InfraBot.db
 
-class Updater:
+class Updater(InfraModule):
+    def __init__(self):
+        super().__init__("update", None)
+
     def api_entry(self, message, channel, user, team_id):
         if message.startswith("in "):
             remainder = message[len("in "):]

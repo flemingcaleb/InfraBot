@@ -88,3 +88,33 @@ class Updates(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
 
+# Models for the lab module
+class Labs(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
+    url = db.Column(db.String(150), nullable=False)
+    difficulty = db.Column(db.Integer, nullable=True)
+    possible_score = db.Column(db.Integer, nullable=True)
+
+class LabScores(db.Model):
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), primary_key=True)
+    score = db.Column(db.Integer, nullable=False)
+
+class HintCategories(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    num_of_hints = db.Column(db.Integer, nullable=False)
+
+class Hints(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    lab_id = db.Column(db.Integer, db.ForeignKey('labs.id'), nullable=False)
+    category = db.Column(db.Integer, db.ForeignKey('hint_categories.id'), nullable=False)
+    seq_num = db.Column(db.Integer, nullable=False)
+    hint = db.Column(db.Text, nullable=False)

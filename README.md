@@ -28,10 +28,12 @@ The permissions of the user may be checked at any time using the checkPermission
 - /api/slash/set_admin_channel : URI for slash command to set the current channel as the admin channel for the workspace
 - /install  : URI for app installation to new workspaces
 - /install/confirm : URI for second step of app installation on new workspaces
+
 -----------------------------------------------------------------------
 ## Agent API
 - /api/agent/\<id\>/command : Allows a registered agent to fetch a list of pending command IDs
 - /api/agent/\<aid\>/command/\<cid\> : Allows a registered agent to GET the command corresponding to <cid> and POST the results from command id <cid>
+
 -----------------------------------------------------------------------
 ## Module API
 Must provide function:
@@ -46,6 +48,9 @@ Provided helper functions:
  notifyAdmins(message, team_id)                              | Boolean | Sends a message to the designated admin channel for the given workspace, returns a boolean indicating if the admins have been notified (false if the admin channel not set)
  checkPermission(user, requiredPerms, team_id)               | Boolean | Checks to see if the given user possesses the specified permissions. Returns true/false
  getUserName(user_id, team_id)                               | String  | Returns the username of the given user
+ checkDM(channel, team_id)				     | Boolean | Checks to see if the given channel is a DM with InfraBot
+ deleteMessage(ts_to_delete, channel, team)		     | N/A     | Delete given message
+
 -----------------------------------------------------------------------
 ## Database Schema
 ### Table: users
@@ -122,4 +127,5 @@ Provided helper functions:
   | ORANGE |
   |  PINK  |
   |  Red   |
+
   -----------------------------------------------------------------------------------

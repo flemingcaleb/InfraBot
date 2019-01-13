@@ -1,0 +1,41 @@
+{
+    "name":"Example Lab",
+    "workspace_id":0,
+    "url":"example.lab.com",
+    "difficulty":0,
+    "max_score":100,
+    "categories": [
+        {
+            "name":"Category 1",
+            "num_hints":2,
+            "hints":[
+                {
+                    "seq_num":1,
+                    "hint":"This is the first hint"
+                },
+                {
+                    "seq_num":2,
+                    "hint":"This is the second hint in the first category"
+                }
+            ]
+        },
+        {
+            "name":"Category 2",
+            "num_hints":3,
+            "hints":[
+                {
+                    "seq_num":1,
+                    "hint":"First hint of second category"
+                },
+                {
+                    "seq_num":2,
+                    "hint":"Second Hint"
+                },
+                {
+                    "seq_num":3,
+                    "hint":"Third Hint"
+                }
+            ]
+        }
+    ]
+}

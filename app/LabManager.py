@@ -31,19 +31,6 @@ class LabManager(InfraModule):
 
     def api_entry(self, message, channel, user, team_id):
         if message is "":
-            # Check if the user is allowed to get a hint
-            lastHint = Database.Users.query.filter_by(user_id=user).first()
-            curTime = datetime.now()
-            if not lastHint is None:
-                workspace = InfraBot.getClient(team_id)
-                timeFrame = workspace.hint_timeout
-                if curTime < (lastHint + timeFrame):
-                    response = "You must wait until "
-                    response += str(lastHint+timeFrame)
-                    response += " for your next hint"
-                    InfraBot.sendEphemeral(response, channel, user, team_id)
-                    return "Permission Denied"
- 
             # Start menu to select hint to give
             message_attachments = [
                 {
@@ -89,7 +76,7 @@ class LabManager(InfraModule):
         if not team in self.workspaces:
             if not self.add_workspace_id(team_id):
                 print("Workspace does not exist")
-                return "Workspace " + team_id + " does not exist"
+                return "Workspace " + team + " does not exist"
 
         for action in form_data["actions"]:
             splitArr = action['name'].split(":")
@@ -102,6 +89,29 @@ class LabManager(InfraModule):
                 if action['selected_options'][0]['value'] == "list":
                     message_text,attachments = self.labs_list(user, channel, team, form_data)
                 elif action['selected_options'][0]['value'] == "hint":
+                    # Check if the user is allowed to get a hint
+                    curUser = Database.Users.query.filter_by(user_id=user).first()
+                    curWorkspace = Database.Workspaces.query.filter_by(team_id = team).first()
+                    curTime = datetime.now()
+                    lastHint = curUser.last_hint
+                    if not lastHint is None:
+                        if curWorkspace is None:
+                            print("Workspace is None")
+                            InfraBot.deleteMessage(form_data['message_ts'], channel, team)
+                            return""
+                        print("Workspace: ", curWorkspace)
+                        timeFrame = timedelta(seconds=curWorkspace.hint_timeout)
+                        if curTime < (lastHint + timeFrame):
+                            response = "You must wait "
+                            response += str((lastHint+timeFrame)-curTime)
+                            response += " until your next hint"
+                            InfraBot.deleteMessage(form_data['message_ts'], channel, team)
+                            InfraBot.sendEphemeral(response, channel, user, team)
+                            return ""
+                    else:
+                        curUser.last_hint = datetime.now()
+                        Database.db.session.commit()
+
                     message_text,attachments = self.labs_hints_list(user, channel, team, form_data)
                 elif action['selected_options'][0]['value'] == "submit":
                     message_text,attachments = self.labs_submit(user, channel, team, form_data)

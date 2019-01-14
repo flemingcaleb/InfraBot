@@ -122,8 +122,6 @@ def message_handle():
             else:
                 print("Command Not Found")
                 sendHelp("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
-        else:
-            print("Message contains no text")
     else:
         print("Event not a message")
         print(content)
@@ -133,7 +131,6 @@ def message_handle():
 def message_option_handle():
     # Parse the request payload
     form_json = json.loads(request.form["payload"])
-    print("Form Data:\n", form_json)
 
     menu_options = commandDict[form_json['callback_id']].option_entry(form_json)
 
@@ -144,7 +141,6 @@ def message_actions_handle():
     # Parse the request payload
     form_json = json.loads(request.form["payload"])
 
-    print("Action Form:\n", form_json)
     # Check to see what the user's selection was and update the message
     commandDict[form_json['callback_id']].action_entry(form_json)
 
@@ -159,7 +155,6 @@ def slash_set_admin_channel():
         print("Unauthorized mesage detected")
         return 401
 
-    print("Channel: ", channel)
     if not checkPermission(user, "owner", team_id):
         print(user + " attempted to set admin channel of workspace " + team_id)
         sendEphemeral("Access Denied - Must be Owner to set admin channel", channel, user, team_id)

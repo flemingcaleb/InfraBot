@@ -76,7 +76,6 @@ class LabManager(InfraModule):
                 return "!lab hint reset - Permission Denied: User " + user
 
             remainder = message[len("hint reset "):]
-            print(remainder[2:-1])
             curUser = Database.Users.query.filter_by(user_id=remainder[2:-1]).first()
             curUser.last_hint = None
             Database.db.session.commit()
@@ -115,7 +114,6 @@ class LabManager(InfraModule):
                             print("Workspace is None")
                             InfraBot.deleteMessage(form_data['message_ts'], channel, team)
                             return""
-                        print("Workspace: ", curWorkspace)
                         timeFrame = timedelta(seconds=curWorkspace.hint_timeout)
                         if curTime < (lastHint + timeFrame):
                             response = "You must wait "
@@ -147,7 +145,6 @@ class LabManager(InfraModule):
             InfraBot.sendEphemeral(message_text, channel, user, team, attachments_send=attachments) 
 
     def option_entry(self, form_data):
-        print("Options:\n", form_data)
         splitArr = form_data['name'].split(":")
         name = splitArr[0]
         if len(splitArr) > 1:
@@ -236,10 +233,8 @@ class LabManager(InfraModule):
 
 
     def labs_hints_categories(self, user, channel, team, form):
-        print("Categories:\n", form)
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         tempVal = form['actions'][0]['selected_options'][0]['value']
-        #print(tempVal)
         message_attachments = [
             {
                 "text": "Select a Category from Lab",
@@ -261,10 +256,8 @@ class LabManager(InfraModule):
         return "",message_attachments
 
     def labs_hint_selection(self, user, channel, team, form):
-        print("Hints:\n", form)
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         tempVal = form['actions'][0]['selected_options'][0]['value']
-        #print(tempVal)
         message_attachments = [
             {
                 "text": "Select a hint number",

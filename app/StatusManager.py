@@ -1,11 +1,15 @@
 import InfraBot
+from InfraModule import InfraModule
 from Database import status_code as statusType
 import Database
 
-class StatusManager:
-    workspaces = {}
+class StatusManager(InfraModule):
+    
     def __init__ (self):
-        queries = Database.Status.query.all();
+        super().__init__("status", None)
+        self.workspaces = {}
+        queries = Database.Status.query.all()
+
         for workspace in queries:
             dbWorkspace = Database.Workspaces.query.filter_by(id = workspace.workspace).first()
             if dbWorkspace is None:
@@ -37,7 +41,7 @@ class StatusManager:
                 InfraBot.notifyAdmins(InfraBot.getUserName(user, team_id) + " set status to YELLOW", team_id)
             else:
                 if not InfraBot.checkPermission(user, "admin", team_id):
-                    InfraBot.send_error("Access Denied", channel, user, team_id)
+                    InfraBot.sendHelp("Access Denied", channel, user, team_id)
                     return "Access Denied"
                 
                 if remainder == "GREEN":
@@ -49,10 +53,14 @@ class StatusManager:
                 elif remainder == "RED":
                     curStatus.status = statusType.RED
                 else:
-                    InfraBot.send_error("Invalid status.", channel, user, team_id)
+                    InfraBot.sendHelp("Invalid status.", channel, user, team_id)
                     return "Invalid status selected"
 
-            InfraBot.sendEphemeral("Status: " + curStatus.status.name, channel, user, team_id)
+            if InfraBot.checkDM(channel, team_id):
+                InfraBot.sendMessage("Status: " + curStatus.status.name, channel, team_id)
+            else:
+                InfraBot.sendEphemeral("Status: " + curStatus.status.name, channel, user, team_id)
+            
             Database.db.session.commit()
             return "Set status to " + curStatus.status.name
         elif message.startswith("help"):

@@ -4,9 +4,10 @@ import os				# To access tokens
 from slackclient import SlackClient
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
-from flask import request
+from flask import request, make_response, Response
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
+import json
 import Helper
 
 # Copyright (c) 2012-2014 Ivan Akimov, David Aurelio
@@ -24,6 +25,7 @@ import InfraManager
 import Database
 import AgentManager
 import StatusManager
+import LabManager
 
 # Set of tokens provided by the app
 clientID = os.environ['CLIENT_ID']
@@ -41,14 +43,16 @@ user = UserManager.UserManager()
 infra = InfraManager.InfraManager()
 update = Updater.Updater()
 status = StatusManager.StatusManager()
+lab = LabManager.LabManager()
 
 commandDict = {
-        'dante':dante.api_entry,
-        'infra':infra.api_entry,
-        'user':user.api_entry,
-        'update':update.api_entry,
-        'agent':AgentManager.api_entry,
-        'status':status.api_entry
+        'dante':dante,
+        'infra':infra,
+        'user':user,
+        'update':update,
+        'agent':AgentManager,
+        'status':status,
+        'lab':lab
         }
 
 # Encoder objects
@@ -69,7 +73,27 @@ def test():
         print("Unauthorized message detected")
         return 401
     print("RECIEVED TEST!")
-    sendMessage("Hello from /test", content['channel_id'], content['team_id'])
+
+    message_attachments = [
+        {
+            "fallback": "Upgrade your Slack client to use messages like these.",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "callback_id": "menu_options_2319",
+            "actions": [
+                {
+                    "name": "games_list",
+                    "text": "Pick a game...",
+                    "type": "select",
+                    "data_source": "external"
+                }
+            ]
+        }
+    ]
+
+
+
+    sendMessage("Hello from /test", content['channel_id'], content['team_id'], attachments_send=message_attachments)
     return "Test Sent, did you see the prompt?"
 
 # URI for event subscription notifications
@@ -91,17 +115,40 @@ def message_handle():
         if 'text' in curEvent and curEvent['text'].startswith("!"):
             command = curEvent['text'][1:]
             key = command.split(' ', 1)[0]
-            if key in commandDict:
-                commandDict[key](command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
+            if key == "help":
+                sendHelp(None, curEvent['channel'], curEvent['user'], team_id)
+            elif key in commandDict:
+                commandDict[key].api_entry(command[len(key)+1:], curEvent['channel'], curEvent['user'], team_id)
             else:
                 print("Command Not Found")
-                sendEphemeral("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
+                sendHelp("Command \"" + key + "\"" + " Not Found", curEvent['channel'], curEvent['user'], team_id)
         else:
             print("Message contains no text")
     else:
         print("Event not a message")
         print(content)
     return "200"
+
+@app.route("/api/messages/options",methods=['POST'])
+def message_option_handle():
+    # Parse the request payload
+    form_json = json.loads(request.form["payload"])
+    print("Form Data:\n", form_json)
+
+    menu_options = commandDict[form_json['callback_id']].option_entry(form_json)
+
+    return (Response(json.dumps(menu_options), mimetype='application/json'),200)
+
+@app.route("/api/messages/actions",methods=['POST'])
+def message_actions_handle():
+    # Parse the request payload
+    form_json = json.loads(request.form["payload"])
+
+    print("Action Form:\n", form_json)
+    # Check to see what the user's selection was and update the message
+    commandDict[form_json['callback_id']].action_entry(form_json)
+
+    return make_response("", 200)
 
 @app.route("/api/slash/set_admin_channel",methods=['POST'])
 def slash_set_admin_channel():
@@ -175,16 +222,24 @@ def install_confirm():
     Output:
         N/A
 '''
-def sendMessage (message, sendChannel, team_id):
+def sendMessage (message, sendChannel, team_id, attachments_send=None):
     client,_ = getClient(team_id)
     if client is None:
         print("Team not found: ", team_id)
 
-    client.api_call(
-        "chat.postMessage",
-        channel=sendChannel,
-        text=message
-        )
+    if attachments_send is None:
+        client.api_call(
+            "chat.postMessage",
+            channel=sendChannel,
+            text=message
+            )
+    else:
+        client.api_call(
+            "chat.postMessage",
+            channel=sendChannel,
+            text=message,
+            attachments=attachments_send
+            )
 
 ''' Function to send an ephemeral message
     Input:
@@ -194,7 +249,7 @@ def sendMessage (message, sendChannel, team_id):
     Output:
         N/A
 '''
-def sendEphemeral (message, sendChannel, sendUserID, team_id):
+def sendEphemeral (message, sendChannel, sendUserID, team_id, attachments_send=None):
     client,_ = getClient(team_id)
 
     if client is None:
@@ -205,8 +260,39 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id):
         "chat.postEphemeral",
         channel=sendChannel,
         user=sendUserID,
-        text=message
-        )
+        text=message,
+        attachments=attachments_send
+    )
+
+def modifyMessage(orig_ts, message, sendChannel, sendUser, team, attachments_send=None):
+    client,_ = getClient(team)
+
+    if client is None:
+        print("Team not found: ", team)
+        return
+
+    client.api_call(
+        "chat.update",
+        channel=sendChannel,
+        user=sendUser,
+        ts=orig_ts,
+        text=message,
+        attachments=attachments_send
+    )
+
+def deleteMessage(ts_delete, chan, team):
+    client,_ = getClient(team)
+
+    if client is None:
+        print("Team not found: ", team)
+        return
+
+    client.api_call(
+        "chat.delete",
+        channel=chan,
+        ts=ts_delete
+    )
+
 ''' Function to send a message to the designated admin channel
     Input:
         message: Message to send to the admins
@@ -253,6 +339,33 @@ def checkPermission(user, requiredPerms, team_id):
         return True
     else:
         return False
+
+def checkDM(channelCheck, team):
+    client,_ = getClient(team)
+    if client is None:
+        print("Client not found: ", team)
+        return False
+
+    response = client.api_call(
+        "channels.info",
+        channel=channelCheck
+        )
+
+    if response['ok']:
+        #Channel is a public channel
+        return False
+
+    response = client.api_call(
+        "groups.info",
+        channel=channelCheck
+        )
+
+    if response['ok']:
+        #Channel is a pivate channel/group message
+        return False
+
+    #Channel is a DM
+    return True
 
 ''' Function to find the verify a user and determine their group membership
     Input:
@@ -325,6 +438,19 @@ def addClient(bot, access, verify, team):
     newClient = Database.Workspaces(bot, access, veritoken, team)
     db.session.add(newClient)
     db.session.commit()
+
+def sendHelp(message, sendChannel, sendUserID, sendTeamID):
+    messageString = ""
+    if not message is None:
+        messageString += message +"\n\n"
+    messageString += "InfraBot Help:\n"
+    messageString += "\t!help - Prints this help prompt\n"
+    messageString += "\t!<module name> help - Prints the help for a given module\n"
+    messageString += "\nModule List:\n"
+    for module in commandDict:
+        messageString += "\t\"!" + module + "\"\n"
+
+    sendEphemeral(messageString, sendChannel, sendUserID, sendTeamID)
 
 if __name__ == '__main__':
     main()

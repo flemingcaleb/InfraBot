@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 class LabManager(InfraModule):
     def __init__ (self):
         self.workspaces = {}
+        
+        #default menu options
         menu_options = {
             "options": [
                 {
@@ -29,6 +31,16 @@ class LabManager(InfraModule):
             else:
                 self.workspaces[dbWorkspace.team_id] = workspace.workspace
 
+    ''' Module entry point for initial commands
+        Input:
+            message: Command for the module (minus the '!lab')
+            channel: Channel the command originated in
+            user: UserID that issued the command
+            team_id: TeamID the command is from
+
+        Output:
+            String to be logged by the InfraBot core
+    '''
     def api_entry(self, message, channel, user, team_id):
         if message is "":
             # Start menu to select hint to give
@@ -70,7 +82,9 @@ class LabManager(InfraModule):
             else:
                 InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
             return "Initial Lab"
+
         elif message.startswith("hint reset "):
+            # Handle command to reset the hint lockout for a user
             if not InfraBot.checkPermission(user, "admin", team_id):
                 InfraBot.sendEphemeral("Permission Denied", channel, user,team_id)
                 return "!lab hint reset - Permission Denied: User " + user
@@ -81,8 +95,9 @@ class LabManager(InfraModule):
             Database.db.session.commit()
             InfraBot.sendEphemeral("Reset hint timer for " + InfraBot.getUserName(remainder[2:-1],team_id), channel, user, team_id)
             return "Reset hint timer for " + InfraBot.getUserName(remainder[2:-1],team_id)
-        # Set the workspace lab timeout '''
+       
         elif message.startswith("set timeout "):
+            # Set the workspace hint lockout
             if not InfraBot.checkPermission(user, "owner", team_id):
                 InfraBot.sendEphemeral("Permission Denied", channel, user,team_id)
                 return "!lab hint reset - Permission Denied: User " + user
@@ -109,6 +124,13 @@ class LabManager(InfraModule):
             self.send_error("Invalid Command", channel, user, team_id)
             return "Command not found"
     
+    ''' Module entry point for interactive action responses
+        Input:
+        form_data: Payload of the message sent as a result of 
+            the interactive message
+        
+        Output: N/A
+    '''
     def action_entry(self, form_data):
         channel = form_data['channel']['id']
         user = form_data['user']['id']
@@ -120,12 +142,15 @@ class LabManager(InfraModule):
                 return "Workspace " + team + " does not exist"
 
         for action in form_data["actions"]:
+            # Separate true action name from previously selected option
             splitArr = action['name'].split(":")
             name = splitArr[0]
             if len(splitArr) > 1:
                 data = splitArr[1]
             else:
                 data = None
+
+            # Determine if user wants list, hint, or to submit
             if name == "initial_menu":
                 if action['selected_options'][0]['value'] == "list":
                     message_text,attachments = self.labs_list(user, channel, team, form_data)
@@ -171,7 +196,17 @@ class LabManager(InfraModule):
         else:
             InfraBot.sendEphemeral(message_text, channel, user, team, attachments_send=attachments) 
 
+    ''' Module entry point for dynamic options for interactive actions
+        Input:
+        form_data: Payload of the message sent as a result of 
+            the interactive message
+
+        Output:
+            Object that when json.dumped contains the properly formatted
+            options for the specified interactive messages
+    '''
     def option_entry(self, form_data):
+        # Separate true action name from previously selected option
         splitArr = form_data['name'].split(":")
         name = splitArr[0]
         if len(splitArr) > 1:
@@ -179,7 +214,9 @@ class LabManager(InfraModule):
         else:
             data = None
         team = form_data['team']['id']
+    
         if name == "list":
+            # List possible labs as options
             first = True
             newOptions = {}
             newOptions['options'] = []
@@ -195,6 +232,7 @@ class LabManager(InfraModule):
                     newOptions['options'].append(newOption)
                 return newOptions         
         elif name == "categories":
+            # List possible categories from the selected lab
             categories = Database.HintCategories.query.filter_by(lab_id=data).all()
             newOptions = {}
             newOptions['options'] = []
@@ -209,6 +247,7 @@ class LabManager(InfraModule):
                     newOptions['options'].append(newOption)
                 return newOptions
         elif name == "hints":
+            # List hint numbers from the selected category
             hints = Database.Hints.query.filter_by(category=data).all()
             newOptions = {}
             newOptions['options'] = []
@@ -218,12 +257,24 @@ class LabManager(InfraModule):
             else:
                 for hint in hints:
                     newOption = {}
-                    newOption['text'] = hint.seq_num
+                    newOption['text'] = "Hint #" + hint.seq_num
                     newOption['value'] = hint.id
                     newOptions['options'].append(newOption)
                 return newOptions
         return self.options
 
+    ''' Function that generates a list of labs and their URLs
+        Input:
+            user: User that requested the lab listing
+            channel: Channel to post the listing in
+            team: Team whose labs to query
+            form: The entirety of the form data from the request
+
+        Output:
+            A tuple with the message and any attachments to send.
+            The message will be a newline separated list of labs
+            and the attachments will be None
+    '''
     def labs_list(self, user, channel, team, form):
         resultString = ""
 
@@ -237,11 +288,27 @@ class LabManager(InfraModule):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return resultString,None
 
+    ''' Function that creates the needed attachment to ask the user
+        which lab they would like a hint for
+
+        Input:
+            user: User that requested the lab listing
+            channel: Channel to post the listing in
+            team: Team whose labs to query
+            form: The entirety of the form data from the request
+
+        Output:
+            A tuple with the message and attachments to send. The 
+            message will be empty string and the attachments will 
+            be the json formatted attachment with the proper action 
+            name ("list") to continue the workflow in the action_entry
+            function.
+    '''
     def labs_hints_list(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         message_attachments = [
             {
-                "text": "Select a Lab",
+                "text": "For which lab would you like a hint?",
                 "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
                 "color": "#3AA3E3",
                 "attachment_type": "default",
@@ -249,7 +316,7 @@ class LabManager(InfraModule):
                 "actions": [
                     {
                         "name": "list",
-                        "text": "Which random bug do you want to resolve?",
+                        "text": "Select a Lab",
                         "type": "select",
                         "data_source": "external",
                     }
@@ -258,6 +325,23 @@ class LabManager(InfraModule):
         ]
         return "",message_attachments
 
+    ''' Function that creates the needed attachment to ask the user
+        which category of hint they want from their selected lab
+
+        Input:
+            user: User that requested the lab listing
+            channel: Channel to post the listing in
+            team: Team whose labs to query
+            form: The entirety of the form data from the request
+
+        Output:
+            A tuple with the message and attachments to send. The 
+            message will be empty string and the attachments will 
+            be the json formatted attachment with the proper action 
+            name ("categories:<value>") to continue the workflow in 
+            the action_entry function. The <value> indicates the lab
+            the user selected in the previous dialog.
+    '''
     def labs_hints_categories(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         tempVal = form['actions'][0]['selected_options'][0]['value']
@@ -271,7 +355,7 @@ class LabManager(InfraModule):
                 "actions": [
                     {
                         "name": "categories:"+tempVal,
-                        "text": "Which random bug do you want to resolve?",
+                        "text": "Select Category",
                         "type": "select",
                         "data_source": "external",
                     }
@@ -281,6 +365,24 @@ class LabManager(InfraModule):
         ]
         return "",message_attachments
 
+    ''' Function that creates the needed attachment to ask the user
+        which hint number they want from their selected lab and
+        category.
+
+        Input:
+            user: User that requested the lab listing
+            channel: Channel to post the listing in
+            team: Team whose labs to query
+            form: The entirety of the form data from the request
+
+        Output:
+            A tuple with the message and attachments to send. The 
+            message will be empty string and the attachments will 
+            be the json formatted attachment with the proper action 
+            name ("hints:<value>") to continue the workflow in 
+            the action_entry function. The <value> indicates the 
+            category the user selected in the previous dialog.
+    '''
     def labs_hint_selection(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         tempVal = form['actions'][0]['selected_options'][0]['value']
@@ -294,7 +396,7 @@ class LabManager(InfraModule):
                 "actions": [
                     {
                         "name": "hints:"+tempVal,
-                        "text": "Which random bug do you want to resolve?",
+                        "text": "Select Hint Number",
                         "type": "select",
                         "data_source": "external",
                     }
@@ -304,6 +406,21 @@ class LabManager(InfraModule):
         ]
         return "",message_attachments
 
+    ''' Function that fethes the requested hint for the lab and
+        category selected by the user in the previous messages.
+
+        Input:
+            user: User that requested the lab listing
+            channel: Channel to post the listing in
+            team: Team whose labs to query
+            form: The entirety of the form data from the request
+
+        Output:
+            A tuple with the message and attachments to send. The 
+            message will contain the text of the hint selected by the 
+            user throughout the previous workflow. The attachments will
+            be None.
+    '''
     def labs_hint_dispense(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         tempVal = form['actions'][0]['selected_options'][0]['value']
@@ -316,13 +433,37 @@ class LabManager(InfraModule):
         message += category.name+" "
         message += "#" + str(hint.seq_num) + " - " + hint.hint
 
-        InfraBot.sendEphemeral(message, channel, user, team)
-        return "",None
+        return message,None
     
+    ''' Function that will generate the start of the submit lab workflow
+        at a later date.
+
+        Input:
+            user: User that requested the lab listing
+            channel: Channel to post the listing in
+            team: Team whose labs to query
+            form: The entirety of the form data from the request
+
+        Output:
+            A tuple with the message and attachments to send. The 
+            message will contain a prompt indicating that submissions
+            are not yet supported and the attachments will be None.
+    '''
     def labs_submit(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return "Lab submissions not yet implemented",None
 
+    ''' Function that sends an error/help prompt to the user
+
+        Input:
+            message: Error message to send to the user, ommitted if None
+            channel: Destination channel of the error message
+            user: Recipient of the error message
+            team_id: Team in which to send the message
+
+        Output:
+            N/A
+    '''
     def send_error(self, message, channel, user, team_id):
         messageString = ""
         if not message is None:

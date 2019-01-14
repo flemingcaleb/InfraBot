@@ -41,6 +41,7 @@ Must provide function:
   api_entry(message, channel, user) - Returns message to be logged
   
 Provided helper functions:
+
  Function                                                    | Returns | Description
  :---------------------------------------------------------- | :-----: | :----
  sendMessage(message, sendChannel, team_id)                  | N/A     | Sends given message to provided channel
@@ -50,6 +51,7 @@ Provided helper functions:
  getUserName(user_id, team_id)                               | String  | Returns the username of the given user
  checkDM(channel, team_id)				     | Boolean | Checks to see if the given channel is a DM with InfraBot
  deleteMessage(ts_to_delete, channel, team)		     | N/A     | Delete given message
+modifyMessage(original_ts, message, channel, user, team, attachments) | N/A | Modify the given message
 
 -----------------------------------------------------------------------
 ## Database Schema
@@ -60,6 +62,7 @@ Provided helper functions:
  permission_level | permissions | enum    
  workspace_id     | int         | FOREIGN KEY to workspaces.id 
  user_id          | varchar(20) |          
+ last_hint        | timestamp   | Indicates the last time the user recieved a hint from the lab module
   
 ### Table: workspaces
  Column Name      | Type        | Notes   
@@ -70,6 +73,7 @@ Provided helper functions:
  verify_token     | varchar(100)|
  team_id          | varchar(20) |
  admin_channel    | varchar(20) |
+ hint_timeout     | int         | Minimum number of seconds between hints
 
 ### Table: status
  Column Name          | Type        | Notes

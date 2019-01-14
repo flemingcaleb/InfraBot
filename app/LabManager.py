@@ -32,6 +32,9 @@ class LabManager(InfraModule):
     def api_entry(self, message, channel, user, team_id):
         if message is "":
             # Start menu to select hint to give
+            if not InfraBot.checkPermission(user, "user", team_id):
+                InfraBot.sendEphemeral("Permission Denied", channel, user,team_id)
+                return "!lab - Permission Denied: User " + user
             message_attachments = [
                 {
                     "text": "Lab Menu",
@@ -67,7 +70,20 @@ class LabManager(InfraModule):
             else:
                 InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
             return "Initial Lab"
+        elif message.startswith("hint reset "):
+            if not InfraBot.checkPermission(user, "admin", team_id):
+                InfraBot.sendEphemeral("Permission Denied", channel, user,team_id)
+                return "!lab hint reset - Permission Denied: User " + user
 
+            remainder = message[len("hint reset "):]
+            print(remainder[2:-1])
+            curUser = Database.Users.query.filter_by(user_id=remainder[2:-1]).first()
+            curUser.last_hint = None
+            Database.db.session.commit()
+            InfraBot.sendEphemeral("Reset hint timer for " + InfraBot.getUserName(remainder[2:-1],team_id), channel, user, team_id)
+        else:
+            self.send_error("Invalid Command", channel, user, team_id)
+            return "Command not found"
     def action_entry(self, form_data):
         channel = form_data['channel']['id']
         user = form_data['user']['id']
@@ -282,6 +298,18 @@ class LabManager(InfraModule):
         message += "#" + str(hint.seq_num) + " - " + hint.hint
 
         InfraBot.sendEphemeral(message, channel, user, team)
+    
     def labs_submit(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return "Lab submissions not yet implemented",None
+
+    def send_error(self, message, channel, user, team_id):
+        messageString = ""
+        if not message is None:
+            messageString += message +"\n\n"
+        messageString += "Lab Help:\n"
+        messageString += "\t!lab - Open the interactive lab menu\n"
+        messageString += "\t!lab hint reset <user> - Reset the hint timer for the given user (requires admin privileges)\n"
+        messageString += "\t!lab help - Prints this help prompt\n"
+
+        InfraBot.sendEphemeral(messageString, channel, user, team_id)

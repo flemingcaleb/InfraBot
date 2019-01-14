@@ -68,6 +68,9 @@ class LabManager(InfraModule):
                 InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
             return "Initial Lab"
 
+        else:
+            send_error("Invalid Command", channel, user, team)
+            return "Command not found"
     def action_entry(self, form_data):
         channel = form_data['channel']['id']
         user = form_data['user']['id']
@@ -282,6 +285,18 @@ class LabManager(InfraModule):
         message += "#" + str(hint.seq_num) + " - " + hint.hint
 
         InfraBot.sendEphemeral(message, channel, user, team)
+    
     def labs_submit(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return "Lab submissions not yet implemented",None
+
+    def send_error(self, message, channel, user, team_id):
+        messageString = ""
+        if not message is None:
+            messageString += message +"\n\n"
+        messageString += "Lab Help:\n"
+        messageString += "\t!lab - Open the interactive lab menu\n"
+        messageString += "\t!lab hint reset <user> - Reset the hint timer for the given user (requires admin privileges)\n"
+        messageString += "\t!lab help - Prints this help prompt\n"
+
+        InfraBot.sendEphemeral(messageString, channel, user, team_id)

@@ -282,6 +282,7 @@ class LabManager(InfraModule):
         message += "#" + str(hint.seq_num) + " - " + hint.hint
 
         InfraBot.sendEphemeral(message, channel, user, team)
+        return "",None
     def labs_submit(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return "Lab submissions not yet implemented",None

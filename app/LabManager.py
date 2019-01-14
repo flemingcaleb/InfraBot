@@ -257,7 +257,7 @@ class LabManager(InfraModule):
             else:
                 for hint in hints:
                     newOption = {}
-                    newOption['text'] = "Hint #" + hint.seq_num
+                    newOption['text'] = "Hint #" + str(hint.seq_num)
                     newOption['value'] = hint.id
                     newOptions['options'].append(newOption)
                 return newOptions

@@ -218,7 +218,7 @@ class LabManager(InfraModule):
             else:
                 for hint in hints:
                     newOption = {}
-                    newOption['text'] = hint.seq_num
+                    newOption['text'] = "Hint #"hint.seq_num
                     newOption['value'] = hint.id
                     newOptions['options'].append(newOption)
                 return newOptions
@@ -241,7 +241,7 @@ class LabManager(InfraModule):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         message_attachments = [
             {
-                "text": "Select a Lab",
+                "text": "For which lab would you like a hint?",
                 "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
                 "color": "#3AA3E3",
                 "attachment_type": "default",
@@ -249,7 +249,7 @@ class LabManager(InfraModule):
                 "actions": [
                     {
                         "name": "list",
-                        "text": "Which random bug do you want to resolve?",
+                        "text": "Select a Lab",
                         "type": "select",
                         "data_source": "external",
                     }
@@ -271,7 +271,7 @@ class LabManager(InfraModule):
                 "actions": [
                     {
                         "name": "categories:"+tempVal,
-                        "text": "Which random bug do you want to resolve?",
+                        "text": "Select Category",
                         "type": "select",
                         "data_source": "external",
                     }
@@ -294,7 +294,7 @@ class LabManager(InfraModule):
                 "actions": [
                     {
                         "name": "hints:"+tempVal,
-                        "text": "Which random bug do you want to resolve?",
+                        "text": "Select Hint Number",
                         "type": "select",
                         "data_source": "external",
                     }
@@ -316,8 +316,8 @@ class LabManager(InfraModule):
         message += category.name+" "
         message += "#" + str(hint.seq_num) + " - " + hint.hint
 
-        InfraBot.sendEphemeral(message, channel, user, team)
-        return "",None
+        return message,None
+    
     
     def labs_submit(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)

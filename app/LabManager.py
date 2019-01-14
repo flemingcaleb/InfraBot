@@ -92,7 +92,7 @@ class LabManager(InfraModule):
             try:
                 newTimeout = int(remainder)
             except:
-                this.send_error("<number> must be an integer!", channel, user, team_id)
+                self.send_error("<number> must be an integer!", channel, user, team_id)
                 return "!lab set timeout - Number not integer"
 
             curWorkspace = Database.Workspaces.query.filter_by(team_id = team_id).first()
@@ -103,7 +103,8 @@ class LabManager(InfraModule):
             # Database stores hint_timeout in seconds, command input is in minutes
             curWorkspace.hint_timeout = newTimeout*60
             Database.db.session.commit()
-            return "Set workspace timeout for workspace " + team_id + " to " + newTimeout + "minutes"
+            InfraBot.sendEphemeral("Set timeout to " + str(newTimeout) + " minutes", channel, user, team_id)
+            return "Set workspace timeout for workspace " + team_id + " to " + str(newTimeout) + "minutes"
         else:
             self.send_error("Invalid Command", channel, user, team_id)
             return "Command not found"
@@ -147,9 +148,10 @@ class LabManager(InfraModule):
                             InfraBot.deleteMessage(form_data['message_ts'], channel, team)
                             InfraBot.sendEphemeral(response, channel, user, team)
                             return ""
-                    else:
-                        curUser.last_hint = datetime.now()
-                        Database.db.session.commit()
+                    
+                    #Set time that user last got hint
+                    curUser.last_hint = datetime.now()
+                    Database.db.session.commit()
 
                     message_text,attachments = self.labs_hints_list(user, channel, team, form_data)
                 elif action['selected_options'][0]['value'] == "submit":

@@ -62,7 +62,8 @@ class StatusManager(InfraModule):
                 InfraBot.sendEphemeral("Status: " + curStatus.status.name, channel, user, team_id)
             
             Database.db.session.commit()
-            return "Set status to " + curStatus.status.name
+            InfraBot.notifyAdmins("Status set to " + curStatus.status.name, team_id)
+            return InfraBot.getUserName(user, team_id) + " set status to " + curStatus.status.name
         elif message.startswith("help"):
             self.send_error(None, channel, user, team_id)
         else:

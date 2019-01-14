@@ -67,7 +67,9 @@ class LabManager(InfraModule):
             else:
                 InfraBot.sendEphemeral("", channel, user, team_id, attachments_send=message_attachments)
             return "Initial Lab"
-
+        elif message.startswith("hint reset "):
+            remainder = message[len("hint reset "):]
+            print(remainder)
         else:
             send_error("Invalid Command", channel, user, team)
             return "Command not found"

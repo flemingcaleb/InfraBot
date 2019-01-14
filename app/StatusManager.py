@@ -56,13 +56,14 @@ class StatusManager(InfraModule):
                     InfraBot.sendHelp("Invalid status.", channel, user, team_id)
                     return "Invalid status selected"
 
+                InfraBot.notifyAdmins("Status set to " + curStatus.status.name, team_id)
+
             if InfraBot.checkDM(channel, team_id):
                 InfraBot.sendMessage("Status: " + curStatus.status.name, channel, team_id)
             else:
                 InfraBot.sendEphemeral("Status: " + curStatus.status.name, channel, user, team_id)
             
             Database.db.session.commit()
-            InfraBot.notifyAdmins("Status set to " + curStatus.status.name, team_id)
             return InfraBot.getUserName(user, team_id) + " set status to " + curStatus.status.name
         elif message.startswith("help"):
             self.send_error(None, channel, user, team_id)

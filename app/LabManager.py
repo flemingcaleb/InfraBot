@@ -80,9 +80,34 @@ class LabManager(InfraModule):
             curUser.last_hint = None
             Database.db.session.commit()
             InfraBot.sendEphemeral("Reset hint timer for " + InfraBot.getUserName(remainder[2:-1],team_id), channel, user, team_id)
+            return "Reset hint timer for " + InfraBot.getUserName(remainder[2:-1],team_id)
+        # Set the workspace lab timeout '''
+        elif message.startswith("set timeout "):
+            if not InfraBot.checkPermission(user, "owner", team_id):
+                InfraBot.sendEphemeral("Permission Denied", channel, user,team_id)
+                return "!lab hint reset - Permission Denied: User " + user
+            
+            # Retrieve the number of minutes for the hint timeout from the command
+            remainder = message[len("set timeout "):]
+            try:
+                newTimeout = int(remainder)
+            except:
+                this.send_error("<number> must be an integer!", channel, user, team_id)
+                return "!lab set timeout - Number not integer"
+
+            curWorkspace = Database.Workspaces.query.filter_by(team_id = team_id).first()
+            if curWorkspace is None:
+                print("Workspace not found")
+                return "Workspace not found"
+
+            # Database stores hint_timeout in seconds, command input is in minutes
+            curWorkspace.hint_timeout = newTimeout*60
+            Database.db.session.commit()
+            return "Set workspace timeout for workspace " + team_id + " to " + newTimeout + "minutes"
         else:
             self.send_error("Invalid Command", channel, user, team_id)
             return "Command not found"
+    
     def action_entry(self, form_data):
         channel = form_data['channel']['id']
         user = form_data['user']['id']
@@ -231,7 +256,6 @@ class LabManager(InfraModule):
         ]
         return "",message_attachments
 
-
     def labs_hints_categories(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         tempVal = form['actions'][0]['selected_options'][0]['value']
@@ -292,6 +316,7 @@ class LabManager(InfraModule):
 
         InfraBot.sendEphemeral(message, channel, user, team)
         return "",None
+    
     def labs_submit(self, user, channel, team, form):
         InfraBot.deleteMessage(form['message_ts'], channel, team)
         return "Lab submissions not yet implemented",None
@@ -303,6 +328,7 @@ class LabManager(InfraModule):
         messageString += "Lab Help:\n"
         messageString += "\t!lab - Open the interactive lab menu\n"
         messageString += "\t!lab hint reset <user> - Reset the hint timer for the given user (requires admin privileges)\n"
+        messageString += "\t!lab set timeout <number> - Sets the workspace hint timeout to <number> minutes"
         messageString += "\t!lab help - Prints this help prompt\n"
 
         InfraBot.sendEphemeral(messageString, channel, user, team_id)

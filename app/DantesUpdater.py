@@ -19,8 +19,19 @@ class Dantes_Updater(InfraModule):
         self.__curThread.setDaemon(True)
         self.__curThread.start()
 
+    @InfraBot.celery.task
+    def test_celery(channel, user, team_id):
+        print("It Worked")
+        InfraBot.sendMessage("Heck Yes", channel, user, team_id)
+        return True
+
     def api_entry(self, message, channel, user, team_id):
+        
+        print("You see it?")
+        self.test_celery.delay()
         if message == "start":
+            print("You see it?")
+            self.test_celery.delay()
             if not InfraBot.checkPermission(user, "admin", team_id):
                 InfraBot.sendEphemeral("Access Denied", channel, user, team_id)
                 return "Access Denied"

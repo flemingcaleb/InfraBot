@@ -7,6 +7,7 @@ from flask import Flask
 from flask import request, make_response, Response
 from flask import redirect
 from flask_sqlalchemy import SQLAlchemy
+from celery import Celery
 import json
 import Helper
 
@@ -16,7 +17,10 @@ from hashids import Hashids
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = Helper.getUrl(os.environ['DB_USER'],os.environ['DB_PASS'],os.environ['DB_NAME'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['CELERY_BROKER_URL'] = 'pyamqp://InfraBot:OD8tylgjGWRw00pvd1V3zVew@localhost/InfraBot_vhost'
 db = SQLAlchemy(app)
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 import DantesUpdater	# To access DantesUpdator
 import Updater

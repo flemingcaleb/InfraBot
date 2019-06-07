@@ -110,9 +110,9 @@ def message_handle():
 
     curEvent = content['event']
     team_id = content['team_id']
-    
+
     if curEvent['type'] == 'message':
-        if 'text' in curEvent and curEvent['text'].startswith("?"):
+        if 'text' in curEvent and curEvent['text'].startswith("!"):
             command = curEvent['text'][1:]
             key = command.split(' ', 1)[0]
             if key == "help":
@@ -155,7 +155,7 @@ def slash_modify_user_perms():
     if content['token'] != veritoken:
         print("Unauthorized message detected")
         return 401
-    
+
     args = content['text'].split(" ")
     moduser = args[0][2:11]
     if len(args) != 2:
@@ -165,7 +165,7 @@ def slash_modify_user_perms():
         print(user + " attempted to modify permissions of user " + moduser + " to " + args[1])
         sendEphemeral("Access Denied - Must be Owner to change user permissions", channel, user, team)
         return ('', 200)
-	
+
     if args[1] == Database.permissions.owner.name:
         newPerms = Database.permissions.owner
     elif args[1] == Database.permissions.admin.name:

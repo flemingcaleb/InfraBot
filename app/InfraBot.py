@@ -110,7 +110,7 @@ def message_handle():
 
     curEvent = content['event']
     team_id = content['team_id']
-    
+
     if curEvent['type'] == 'message':
         if 'text' in curEvent and curEvent['text'].startswith("!"):
             command = curEvent['text'][1:]
@@ -144,6 +144,55 @@ def message_actions_handle():
     # Check to see what the user's selection was and update the message
     commandDict[form_json['callback_id']].action_entry(form_json)
 
+    return make_response("", 200)
+
+@app.route("/api/slash/modify_user_perms", methods=['POST'])
+def slash_modify_user_perms():
+    content = request.form
+    channel = request.form['channel_id']
+    user = request.form['user_id']
+    team = request.form['team_id']
+    if content['token'] != veritoken:
+        print("Unauthorized message detected")
+        return 401
+
+    args = content['text'].split(" ")
+    moduser = args[0][2:11]
+    if len(args) != 2:
+        print("Invalid number of args")
+        sendEphemeral("Invalid number of args", channel, user, team);
+    if not checkPermission(user, "owner", team):
+        print(user + " attempted to modify permissions of user " + moduser + " to " + args[1])
+        sendEphemeral("Access Denied - Must be Owner to change user permissions", channel, user, team)
+        return ('', 200)
+
+    if args[1] == Database.permissions.owner.name:
+        newPerms = Database.permissions.owner
+    elif args[1] == Database.permissions.admin.name:
+        newPerms = Database.permissions.admin
+    elif args[1] == Database.permissions.user.name:
+        newPerms = Database.permissions.user
+    else:
+        sendEphemeral("Invalid permission name", channel, user, team)
+        return('',200)
+
+    dbUser = Database.Users.query.filter_by(user_id = moduser).first()
+
+    if dbUser is None:
+        # create new user
+        dbWorkspace = Database.Workspaces.query.filter_by(team_id = team).first()
+        newUser = Database.Users(newPerms, dbWorkspace.id, moduser)
+        Database.db.session.add(newUser)
+        Database.db.session.commit()
+        print("Created new user", getUserName(moduser, team), "with permissions", newPerms.name)
+        sendEphemeral("Created new user " + getUserName(moduser, team) + " with permissions " + newPerms.name, channel, user, team)
+    else:
+        origPerms = dbUser.permission_level
+        dbUser.permission_level = newPerms
+        Database.db.session.commit()
+        print("Updated user", getUserName(moduser, team), "with permissions", newPerms.name)
+        print("Original permissions:", origPerms.name)
+        sendEphemeral("Updated user " + getUserName(moduser, team) + " with permissions " + newPerms.name, channel, user, team)
     return make_response("", 200)
 
 @app.route("/api/slash/set_admin_channel",methods=['POST'])

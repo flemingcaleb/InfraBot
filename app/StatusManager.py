@@ -89,7 +89,7 @@ class StatusManager(InfraModule):
         messageString += "\t!status help - Prints this help prompt\n"
         messageString += "\nStatus Meaning:\n"
         messageString += "\tGREEN: All systems functioning as expected\n"
-        messageString += "\tYELLOW: User reported warning. Not yet confirmed by support\n"
+        messageString += "\tYELLOW: User reported issue. Not yet confirmed by support\n"
         messageString += "\tORANGE: Support confirmed issue impacting user experience. VPN and user VMS still accessible\n"
         messageString += "\tPINK: Support confirmed issue impacting user experience and VPN access. User VMs still accessible via lab and/or Wifi\n"
         messageString += "\tRED: Support confirmed issue impacting all services. Virtual Range is inaccessible\n"

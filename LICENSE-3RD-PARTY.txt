@@ -25,6 +25,8 @@ THE SOFTWARE.
                             BSD License
     applies to:
     - Flask, Copyright (c) 2015 by Armin Ronacher and contributers.
+    - Flask-SQLAlchemy, Copyright 2010 Pallets
+
 
 Some rights reserved.
 

@@ -1,7 +1,7 @@
 import os				# To access tokens
 
 # Copyright (c) 2015-2016 Slack Technologies, Inc
-from slackclient import SlackClient
+from slack import WebClient
 # Copyright (c) 2015 by Armin Ronacher and contributors. See AUTHORS for more details.
 from flask import Flask
 from flask import request, make_response, Response
@@ -194,7 +194,7 @@ def install_confirm():
     if error != None:
         return "You have denied access"
 
-    sc = SlackClient("")
+    sc = WebClient("")
 
     print("Requesting tokens")
 
@@ -223,14 +223,12 @@ def sendMessage (message, sendChannel, team_id, attachments_send=None):
         print("Team not found: ", team_id)
 
     if attachments_send is None:
-        client.api_call(
-            "chat.postMessage",
+        client.chat_postMessage(
             channel=sendChannel,
             text=message
             )
     else:
-        client.api_call(
-            "chat.postMessage",
+        client.chat_postMessage(
             channel=sendChannel,
             text=message,
             attachments=attachments_send
@@ -251,8 +249,7 @@ def sendEphemeral (message, sendChannel, sendUserID, team_id, attachments_send=N
         print("Team not found: ", team_id)
         return
 
-    client.api_call(
-        "chat.postEphemeral",
+    client.chat_postEphemeral(
         channel=sendChannel,
         user=sendUserID,
         text=message,
@@ -266,8 +263,7 @@ def modifyMessage(orig_ts, message, sendChannel, sendUser, team, attachments_sen
         print("Team not found: ", team)
         return
 
-    client.api_call(
-        "chat.update",
+    client.chat_update(
         channel=sendChannel,
         user=sendUser,
         ts=orig_ts,
@@ -282,8 +278,7 @@ def deleteMessage(ts_delete, chan, team):
         print("Team not found: ", team)
         return
 
-    client.api_call(
-        "chat.delete",
+    client.chat_delete(
         channel=chan,
         ts=ts_delete
     )
@@ -341,26 +336,17 @@ def checkDM(channelCheck, team):
         print("Client not found: ", team)
         return False
 
-    response = client.api_call(
-        "channels.info",
+    response = client.conversations_info(
         channel=channelCheck
         )
 
-    if response['ok']:
-        #Channel is a public channel
-        return False
+    print("Response in checkDM:\n", response)
+    
+    if response['channel'].get('is_im'):
+        return True
 
-    response = client.api_call(
-        "groups.info",
-        channel=channelCheck
-        )
-
-    if response['ok']:
-        #Channel is a pivate channel/group message
-        return False
-
-    #Channel is a DM
-    return True
+    #Channel is not a DM
+    return False
 
 ''' Function to find the verify a user and determine their group membership
     Input:
@@ -374,8 +360,7 @@ def addUser(toCheck, team):
     if client is None:
         print("Client not found: ", team)
 
-    response = client.api_call(
-        "users.info",
+    response = client.users_info(
         user=toCheck,
         include_locale="false"
     )
@@ -407,8 +392,7 @@ def getUserName(user_id, team):
     if client is None:
         print("Client not found: ", team)
         return ""
-    response = client.api_call(
-        "users.info",
+    response = client.users_info(
         user=user_id,
         include_locale="false"
     )
@@ -423,7 +407,7 @@ def getClient(toCheck):
             return None
         else:
             #Open a SlackClient
-            newClient = SlackClient(dbWorkspace.bot_token)
+            newClient = WebClient(dbWorkspace.bot_token)
             clientDictionary[toCheck] = newClient, dbWorkspace.verify_token
             return newClient, dbWorkspace.verify_token
     else:
